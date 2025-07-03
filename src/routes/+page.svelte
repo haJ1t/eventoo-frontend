@@ -1,6 +1,11 @@
 <script>
   import { onMount } from 'svelte';
   import api from '$lib/api';
+  import "../tailwind.css";
+
+  //shadcn component testing------------------------
+  import { Button } from '$lib/components/ui/button';
+  //------------------------------------------------
 
   let eventStatus = '';
   let userStatus = '';
@@ -52,3 +57,10 @@
 {:else}
   <p>No events available.</p>
 {/if}
+
+
+<h1 class="text-2xl font-bold mb-4">Hello, Tailwind + shadcn!</h1>
+
+<Button variant="default">Click Me</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Cancel</Button>
