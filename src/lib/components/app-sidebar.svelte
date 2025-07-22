@@ -17,7 +17,7 @@
     <Sidebar.Root>
       <Sidebar.Header />
   
-      <Sidebar.Content class="text-base">
+      <Sidebar.Content class="text-base ">
         <!-- Evento Group Header (formerly Projects) -->
         <Collapsible.Root open class="group/collapsible">
           <Sidebar.Group>
