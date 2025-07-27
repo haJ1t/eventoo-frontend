@@ -7,7 +7,9 @@
     <div class="flex items-center space-x-6">
       <Bell class="w-6 h-6" />
       <Settings class="w-6 h-6" />
-      <User class="w-7 h-7 rounded-full" />
+      <a href="./login" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+        <User class="w-7 h-7 rounded-full" />
+      </a>
     </div>
   </header>
   
