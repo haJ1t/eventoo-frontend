@@ -6,7 +6,7 @@
 	import AppHeader from "$lib/components/app-header.svelte";
 	import { page } from "$app/stores";
 	import { derived } from "svelte/store";
-
+	
 	// Check if we are on the login page
 	const isLoginPage = derived(page, ($page) => $page.url.pathname === "/login" || $page.url.pathname === "/register");
 </script>
