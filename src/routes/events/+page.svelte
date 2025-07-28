@@ -146,6 +146,7 @@
 				variant="outline" 
 				onclick={() => showLocationDropdown = !showLocationDropdown}
 				class="flex items-center gap-2"
+				disabled={false}
 			>
 				Location 
 				<span class="transform transition-transform {showLocationDropdown ? 'rotate-180' : ''}">⌄</span>
@@ -171,6 +172,7 @@
 				variant="outline" 
 				onclick={() => showEventSizeDropdown = !showEventSizeDropdown}
 				class="flex items-center gap-2"
+				disabled={false}
 			>
 				Event Size 
 				<span class="transform transition-transform {showEventSizeDropdown ? 'rotate-180' : ''}">⌄</span>
@@ -196,27 +198,16 @@
 				variant="outline" 
 				onclick={() => showTagsDropdown = !showTagsDropdown}
 				class="flex items-center gap-2"
+				disabled={false}
 			>
 				Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
 				<span class="transform transition-transform {showTagsDropdown ? 'rotate-180' : ''}">⌄</span>
 			</Button>
 			
 			{#if showTagsDropdown}
-				<div class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-					<!-- Clear button -->
-					{#if selectedTags.length > 0}
-						<div class="p-2 border-b border-gray-100">
-							<button 
-								onclick={clearAllTags}
-								class="text-xs text-red-500 hover:text-red-700 underline"
-							>
-								Clear All ({selectedTags.length})
-							</button>
-						</div>
-					{/if}
-					
+				<div class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">				
 					<!-- Tag options -->
-					<div class="p-2 space-y-1">
+					<div class="p-2 border-b border-gray-100">
 						{#each allTags as tag}
 							<button
 								onclick={() => toggleTag(tag)}
@@ -233,6 +224,18 @@
 							</button>
 						{/each}
 					</div>
+					
+					<!-- Clear button -->
+					{#if selectedTags.length > 0}
+						<div class="p-2 space-y-1">
+							<button 
+								onclick={clearAllTags}
+								class="text-xs text-red-500 hover:text-red-700 underline"
+							>
+								Clear All ({selectedTags.length})
+							</button>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
