@@ -11,42 +11,27 @@
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
     import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+    import { Orbit } from "lucide-svelte";
   </script>
   
-  <Sidebar.Provider>
-    <Sidebar.Root>
-      <Sidebar.Header />
-  
+  <Sidebar.Provider class="" style="padding-top: 1rem;">
+    <Sidebar.Root class="">
       <Sidebar.Content class="text-base ">
         <!-- Evento Group Header (formerly Projects) -->
-        <Collapsible.Root open class="group/collapsible">
-          <Sidebar.Group>
-            <Sidebar.GroupLabel>
-              {#snippet child({ props })}
-                <Collapsible.Trigger
-                  {...props}
-                  class="text-[17px] font-semibold px-4 py-3 flex items-center justify-between"
-                >
-
-                  <ChevronDown
-                    class="ml-auto h-5 w-5 transition-transform group-data-[state=open]/collapsible:rotate-180"
-                  />
-                </Collapsible.Trigger>
-              {/snippet}
-            </Sidebar.GroupLabel>
-  
+        <Collapsible.Root open class="mb-2">
+          <Sidebar.Group class="" style="padding-top: 5rem;">
             <Collapsible.Content>
-              <Sidebar.GroupContent>
-                <Sidebar.Menu>
-                  <Sidebar.MenuItem>
-                    <Sidebar.MenuButton asChild>
+              <Sidebar.GroupContent class="">
+                <Sidebar.Menu class="">
+                  <Sidebar.MenuItem class="">
+                    <Sidebar.MenuButton>
                       <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Home class="h-5 w-5" />
                         <span>Home</span>
                       </a>
                     </Sidebar.MenuButton>
                   </Sidebar.MenuItem>
-                  <Sidebar.MenuItem>
+                  <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
                       <a href="./events" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Calendar class="h-5 w-5" />
@@ -54,7 +39,7 @@
                       </a>
                     </Sidebar.MenuButton>
                   </Sidebar.MenuItem>
-                  <Sidebar.MenuItem>
+                  <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
                       <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <MapPin class="h-5 w-5" />
@@ -62,11 +47,19 @@
                       </a>
                     </Sidebar.MenuButton>
                   </Sidebar.MenuItem>
-                  <Sidebar.MenuItem>
+                  <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
                       <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Users class="h-5 w-5" />
                         <span>Attendees</span>
+                      </a>
+                    </Sidebar.MenuButton>
+                  </Sidebar.MenuItem>
+                  <Sidebar.MenuItem class="">
+                    <Sidebar.MenuButton asChild>
+                      <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+                        <Orbit class="h-5 w-5" />
+                        <span>Organisers</span>
                       </a>
                     </Sidebar.MenuButton>
                   </Sidebar.MenuItem>
@@ -76,10 +69,9 @@
           </Sidebar.Group>
         </Collapsible.Root>
       </Sidebar.Content>
-  
-      <Sidebar.Footer>
-        <Sidebar.Menu>
-          <Sidebar.MenuItem>
+      <Sidebar.Footer class="">
+        <Sidebar.Menu class="">
+          <Sidebar.MenuItem class="">
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
                 {#snippet child({ props })}
@@ -92,10 +84,10 @@
                   </Sidebar.MenuButton>
                 {/snippet}
               </DropdownMenu.Trigger>
-              <DropdownMenu.Content side="top" class="w-[--bits-dropdown-menu-anchor-width]">
-                <DropdownMenu.Item><span>Account</span></DropdownMenu.Item>
-                <DropdownMenu.Item><span>Billing</span></DropdownMenu.Item>
-                <DropdownMenu.Item><span>Sign out</span></DropdownMenu.Item>
+              <DropdownMenu.Content side="top" class="w-[--bits-dropdown-menu-anchor-width]" portalProps={{}}>
+                <DropdownMenu.Item class="py-2 px-4" inset><span>Account</span></DropdownMenu.Item>
+                <DropdownMenu.Item class="py-2 px-4" inset><span>Billing</span></DropdownMenu.Item>
+                <DropdownMenu.Item class="py-2 px-4" inset><span>Sign out</span></DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           </Sidebar.MenuItem>
@@ -103,9 +95,9 @@
       </Sidebar.Footer>
     </Sidebar.Root>
   
-    <Sidebar.Inset>
+    <Sidebar.Inset class="">
       <header class="flex h-14 items-center justify-between px-4">
-        <Sidebar.Trigger class="h-6 w-6" />
+        <Sidebar.Trigger class="h-6 w-6" onclick={() => console.log('Sidebar triggered')} />
       </header>
     </Sidebar.Inset>
   </Sidebar.Provider>

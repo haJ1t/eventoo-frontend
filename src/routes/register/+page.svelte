@@ -26,7 +26,7 @@
  }
 </script>
 
-<div class="login-bg min-h-screen flex items-center justify-center">
+<div class="login-bg min-h-screen flex items-center justify-center animate-fade-in">
  <Card.Root class="w-full max-w-sm mx-auto p-8 rounded-2xl shadow-xl bg-white animate-fade-in">
   <Card.Header class="flex flex-col items-center gap-2 mb-2">
     <Card.Title class="text-2xl font-extrabold tracking-tight">Sign Up for Evento</Card.Title>
@@ -34,23 +34,23 @@
       Create your account to get started.
     </Card.Description>
   </Card.Header>
-  <Card.Content>
+  <Card.Content class="">
    <form on:submit|preventDefault={handleRegister} class="flex flex-col gap-7">
     <div class="grid gap-2">
-     <Label for="name">Name</Label>
-     <Input id="name" type="text" placeholder="Your name" required bind:value={name} class="modern-input" />
+     <Label for="name" class="">Name</Label>
+     <Input id="name" type="text" placeholder="Your name" required bind:value={name} class="" />
     </div>
     <div class="grid gap-2">
-     <Label for="email">Email</Label>
-     <Input id="email" type="email" placeholder="m@example.com" required bind:value={email} class="modern-input" />
+     <Label for="email" class="">Email</Label>
+     <Input id="email" type="email" placeholder="m@example.com" required bind:value={email} class="" />
     </div>
     <div class="grid gap-2">
-     <Label for="password">Password</Label>
-     <Input id="password" type={showPassword ? 'text' : 'password'} required bind:value={password} class="modern-input" />
+     <Label for="password" class="">Password</Label>
+     <Input id="password" type={showPassword ? 'text' : 'password'} required bind:value={password} class="" />
     </div>
     <div class="grid gap-2">
-     <Label for="confirmPassword">Confirm Password</Label>
-     <Input id="confirmPassword" type={showPassword ? 'text' : 'password'} required bind:value={confirmPassword} class="modern-input" />
+     <Label for="confirmPassword" class="">Confirm Password</Label>
+     <Input id="confirmPassword" type={showPassword ? 'text' : 'password'} required bind:value={confirmPassword} class="" />
     </div>
     <div class="flex items-center gap-4 mt-1">
       <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -60,7 +60,7 @@
     {#if error}
       <div class="text-red-500 text-sm font-medium mt-2">{error}</div>
     {/if}
-    <Button type="submit" class="w-full modern-btn" formnovalidate>Sign Up</Button>
+    <Button type="submit" class="w-full" disabled={false}>Sign Up</Button>
     <div class="text-center mt-2">
       <span class="text-sm text-gray-500">Already have an account?</span>
       <a href="./login" class="text-sm text-blue-600 hover:text-blue-800 transition-colors">Login</a>
@@ -83,44 +83,5 @@
 }
 .text-red-500 {
   color: #ef4444;
-}
-.modern-input {
-  padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #222;
-  font-size: 1.08rem;
-  outline: none;
-  transition: border 0.2s, box-shadow 0.2s;
-  margin-bottom: 0;
-  box-shadow: 0 1px 2px 0 rgba(31,38,135,0.03);
-}
-.modern-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px #6366f133;
-  background: #fff;
-}
-.modern-btn {
-  padding: 0.95rem 1.25rem;
-  border-radius: 0.75rem;
-  font-weight: 700;
-  font-size: 1.13rem;
-  background: #1e293b;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-  box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.04);
-}
-.modern-btn:hover {
-  background: #6366f1;
-  color: #fff;
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 4px 16px 0 rgba(99, 102, 241, 0.10);
-}
-@media (max-width: 640px) {
-  .p-8 { padding: 1.25rem !important; }
-  .modern-btn { font-size: 1rem; padding: 0.8rem 1rem; }
 }
 </style> 

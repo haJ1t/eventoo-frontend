@@ -45,7 +45,7 @@
 	</CardContent>
 	
 	<CardFooter>
-		<Button onclick={handleViewDetails} class="w-full">
+		<Button onclick={handleViewDetails} class="w-full" style="margin-bottom: 1rem;">
 			View Details
 		</Button>
 	</CardFooter>

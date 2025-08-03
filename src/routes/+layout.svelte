@@ -12,7 +12,7 @@
 </script>
 
 {#if !$isLoginPage}
-<Sidebar.Provider>
+<Sidebar.Provider class="" style="">
 	<!-- Fixed Header (z-index ensures it stays on top) -->
 	<div class="fixed top-0 left-0 right-0 z-50">
 		<AppHeader />
