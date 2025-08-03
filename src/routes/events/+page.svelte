@@ -2,6 +2,9 @@
 	import AppEventCard from "$lib/components/app-event-card.svelte";
 	import AppEventDetailsModal from "$lib/components/app-event-details-modal.svelte";
 	import { Button } from "$lib/components/ui/button";
+	// Import Svelte's transition and animation functions
+	import { fade } from 'svelte/transition';
+	import { flip } from 'svelte/animate';
 
 	let selectedEvent = $state(null);
 	let showModal = $state(false);
@@ -243,11 +246,17 @@
 
 	<!-- Event cards -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-		{#each filteredEvents as event}
-			<AppEventCard
-				{event}
-				onclick={handleViewDetails}
-			/>
+		{#each filteredEvents as event (event.id)}
+			<div 
+				animate:flip={{duration: 500}}
+				in:fade={{duration: 300}}
+				out:fade={{duration: 200}}
+			>
+				<AppEventCard
+					{event}
+					onclick={handleViewDetails}
+				/>
+			</div>
 		{/each}
 	</div>
 
