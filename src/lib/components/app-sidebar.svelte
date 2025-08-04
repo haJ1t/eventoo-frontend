@@ -49,7 +49,7 @@
                   </Sidebar.MenuItem>
                   <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
-                      <a href="/attendees" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+                      <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Users class="h-5 w-5" />
                         <span>Attendees</span>
                       </a>
