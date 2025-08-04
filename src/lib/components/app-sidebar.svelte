@@ -33,7 +33,7 @@
                   </Sidebar.MenuItem>
                   <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
-                      <a href="./events" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+                      <a href="/events" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Calendar class="h-5 w-5" />
                         <span>Events</span>
                       </a>
@@ -41,7 +41,7 @@
                   </Sidebar.MenuItem>
                   <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
-                      <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+                      <a href="/venues" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <MapPin class="h-5 w-5" />
                         <span>Venues</span>
                       </a>
@@ -57,7 +57,7 @@
                   </Sidebar.MenuItem>
                   <Sidebar.MenuItem class="">
                     <Sidebar.MenuButton asChild>
-                      <a href="#" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
+                      <a href="/organisers" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Orbit class="h-5 w-5" />
                         <span>Organisers</span>
                       </a>
