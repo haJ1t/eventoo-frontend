@@ -129,19 +129,20 @@
 
 	// Filter organisers based on search query and selected categories
 	const filteredOrganisers = $derived(
-		organisers.filter(organiser => {
-			// Filter by search query
+		organisers
+			.filter(organiser => {
 			const matchesSearch = searchQuery === "" || 
 				organiser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				organiser.location.toLowerCase().includes(searchQuery.toLowerCase());
-			
-			// Filter by selected categories
+
 			const matchesCategories = selectedCategories.length === 0 ||
 				selectedCategories.some(cat => organiser.categories?.includes(cat));
-			
+
 			return matchesSearch && matchesCategories;
-		})
-	);
+			})
+			.sort((a, b) => b.featured - a.featured) // Featured come first
+		);
+
 
 	// Featured organisers
 	const featuredOrganisers = $derived(
@@ -186,29 +187,7 @@
 	<!-- Page title -->
 	<h1 class="text-3xl font-bold tracking-tight">Organisers</h1>
 
-	<!-- Featured Organisers (if any) -->
-	{#if featuredOrganisers.length > 0}
-		<section class="mb-8">
-			<h2 class="text-xl font-semibold mb-4 flex items-center">
-				<Award class="w-5 h-5 mr-2 text-amber-500" />
-				Featured Organisers
-			</h2>
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				{#each featuredOrganisers as organiser (organiser.id)}
-					<div 
-						animate:flip={{duration: 500}}
-						in:fade={{duration: 300}}
-					>
-						<AppOrganiserCard
-							{organiser}
-							onclick={handleViewDetails}
-							featured={true}
-						/>
-					</div>
-				{/each}
-			</div>
-		</section>
-	{/if}
+
 
 	<!-- Search bar -->
 	<div class="relative">
@@ -300,7 +279,7 @@
 		</div>
 	</div>
 
-	<!-- Organiser cards -->
+	<!-- Organiser cards (including featured) -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
 		{#each filteredOrganisers as organiser (organiser.id)}
 			<div 
@@ -311,11 +290,13 @@
 				<AppOrganiserCard
 					{organiser}
 					onclick={handleViewDetails}
-					featured={false}
+					featured={organiser.featured}
 				/>
 			</div>
 		{/each}
 	</div>
+	
+
 
 	<!-- No results message -->
 	{#if filteredOrganisers.length === 0}
