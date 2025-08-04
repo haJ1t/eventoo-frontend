@@ -21,7 +21,7 @@
 			location: "Grand Ballroom",
 			attendees: "500 Attendees",
 			status: "Scheduled",
-			image: "/images/tech.jpg",
+			image: "/images/eventImages/tech.jpg",
 			description: "Join us for the biggest tech conference of the year featuring industry leaders, innovative workshops, and networking opportunities.",
 			organizer: "Tech Events Inc.",
 			price: "$299",
@@ -35,7 +35,7 @@
 			location: "Central Park",
 			attendees: "10000 Attendees",
 			status: "Scheduled",
-			image: "/images/music.jpeg",
+			image: "/images/eventImages/music.jpeg",
 			description: "Three days of amazing music, food, and entertainment in the heart of the city.",
 			organizer: "Music Events Co.",
 			price: "$199",
@@ -49,13 +49,27 @@
 			location: "City Art Gallery",
 			attendees: "200 Attendees",
 			status: "Scheduled",
-			image: "/images/art.jpg",
+			image: "/images/eventImages/art.jpg",
 			description: "A stunning collection of contemporary art from local and international artists.",
 			organizer: "Art Gallery Network",
 			price: "$99",
 			category: "Art",
 			tags: ["Art", "Exhibition", "Culture"]
 		},
+		{
+			id: 4,
+			title: "Ramadan Iftar Gathering",
+			date: "April 10, 2024",
+			location: "Community Center",
+			attendees: "150 Attendees",
+			status: "Scheduled",
+			image: "/images/eventImages/Iftar.jpg",
+			description: "Join us for a community iftar to break fast together during the holy month of Ramadan. Enjoy traditional foods and meaningful conversation.",
+			organizer: "Sohbet Society",
+			price: "Free",
+			category: "Cultural",
+			tags: ["Cultural", "Community", "Religious"]
+		}
 	];
 
 	// Dropdown options
