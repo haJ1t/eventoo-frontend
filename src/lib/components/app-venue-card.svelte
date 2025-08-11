@@ -1,143 +1,235 @@
 <script lang="ts">
-    import { Badge } from "$lib/components/ui/badge";
-    import { Button } from "$lib/components/ui/button";
-    import { MapPin, Calendar, Users, Edit, Trash2, Eye } from "lucide-svelte";
-    import { createEventDispatcher } from 'svelte';
-    
-    const dispatch = createEventDispatcher();
-    
-    export let venue: {
-      id: string;
-      name: string;
-      location: string;
-      capacity: number;
-      image: string;
-      type: string;
-      status: 'active' | 'inactive';
-      upcomingEvents: number;
-      description?: string;
-      amenities?: string[];
+  import { createEventDispatcher } from 'svelte';
+  import { Card, CardContent, CardHeader } from "$lib/components/ui/card";
+  import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
+  import { 
+    MapPin, 
+    Users, 
+    Star, 
+    Calendar, 
+    Clock, 
+    Wifi, 
+    Car, 
+    Coffee,
+    Edit,
+    Eye,
+    Trash2
+  } from "lucide-svelte";
+
+  const dispatch = createEventDispatcher();
+  
+  export let venue: {
+    id: string;
+    name: string;
+    description: string;
+    location: string;
+    capacity: number;
+    type: string;
+    status: 'active' | 'inactive';
+    rating: number;
+    totalBookings: number;
+    amenities: string[];
+    images: string[];
+    pricePerHour: number;
+    availability: {
+      monday: { start: string; end: string; available: boolean };
+      tuesday: { start: string; end: string; available: boolean };
+      wednesday: { start: string; end: string; available: boolean };
+      thursday: { start: string; end: string; available: boolean };
+      friday: { start: string; end: string; available: boolean };
+      saturday: { start: string; end: string; available: boolean };
+      sunday: { start: string; end: string; available: boolean };
     };
-  
-    function handleEdit() {
-      dispatch('edit', venue);
-    }
-  
-    function handleDelete() {
-      dispatch('delete', venue);
-    }
-  
-    function handleView() {
-      dispatch('view', venue);
-    }
-  </script>
-  
-  <!-- Custom card without using Card component -->
-  <div class="bg-card border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group h-full flex flex-col">
-    <!-- Image Container - Tam üst kısım -->
-    <div class="relative h-48 w-full overflow-hidden">
-      <img
-        src={venue.image}
-        alt={venue.name}
-        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        loading="lazy"
-        on:error={(e) => {
-          e.target.src = `https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&crop=center&auto=format`;
-        }}
-      />
+    createdAt: string;
+    updatedAt: string;
+  };
+
+  // Event handlers
+  function handleViewDetails() {
+    console.log('View details for venue:', venue.id);
+    dispatch('view', venue);
+    alert(`Viewing details for: ${venue.name}`);
+  }
+
+  function handleEdit() {
+    console.log('Edit venue:', venue.id);
+    dispatch('edit', venue);
+    alert(`Editing venue: ${venue.name}`);
+  }
+
+  function handleDelete() {
+    console.log('Delete venue:', venue.id);
+    dispatch('delete', venue);
+  }
+
+  // Amenity icons mapping
+  const amenityIcons: Record<string, any> = {
+    'WiFi': Wifi,
+    'Parking': Car,
+    'Catering': Coffee,
+  };
+
+  function getStatusColor(status: string) {
+    return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  }
+
+  function getTypeColor(type: string) {
+    const colors: Record<string, string> = {
+      'Conference Room': 'bg-blue-100 text-blue-800',
+      'Event Hall': 'bg-purple-100 text-purple-800',
+      'Meeting Room': 'bg-orange-100 text-orange-800',
+      'Auditorium': 'bg-indigo-100 text-indigo-800',
+      'Banquet Hall': 'bg-pink-100 text-pink-800',
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  }
+</script>
+
+<Card class="group hover:shadow-lg transition-shadow duration-200">
+  <CardHeader class="p-0">
+    <!-- Image -->
+    <div class="relative h-48 overflow-hidden rounded-t-lg">
+      {#if venue.images && venue.images.length > 0}
+        <img 
+          src={venue.images[0]} 
+          alt={venue.name}
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+        />
+      {:else}
+        <div class="w-full h-full bg-muted flex items-center justify-center">
+          <MapPin class="h-12 w-12 text-muted-foreground" />
+        </div>
+      {/if}
+      
       <!-- Status Badge -->
-      <div class="absolute top-3 right-3">
-        <Badge variant={venue.status === 'active' ? 'default' : 'secondary'} class="text-xs">
-          {venue.status}
+      <div class="absolute top-3 left-3">
+        <Badge href="#" class={getStatusColor(venue.status)}>
+          {venue.status.charAt(0).toUpperCase() + venue.status.slice(1)}
         </Badge>
       </div>
-      <!-- View Button Overlay -->
-      <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-        <Button variant="secondary" size="sm" on:click={handleView} class="opacity-90">
-          <Eye class="h-4 w-4 mr-2" />
-          View Details
-        </Button>
+      
+      <!-- Price -->
+      <div class="absolute top-3 right-3">
+        <Badge href="#" variant="secondary" class="bg-white/90 text-foreground">
+          ${venue.pricePerHour}/hr
+        </Badge>
       </div>
     </div>
-    
-    <!-- Content kısmı -->
-    <div class="flex flex-col flex-1 p-6">
-      <!-- Header -->
-      <div class="flex items-start justify-between mb-3">
-        <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-semibold truncate">{venue.name}</h3>
-          <div class="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <MapPin class="h-4 w-4 shrink-0" />
-            <span class="truncate">{venue.location}</span>
-          </div>
-        </div>
-        <Badge variant="outline" class="ml-2 shrink-0 text-xs">
+  </CardHeader>
+
+  <CardContent class="p-4">
+    <!-- Title and Type -->
+    <div class="space-y-2 mb-3">
+      <div class="flex items-start justify-between gap-2">
+        <h3 class="font-semibold text-lg leading-tight line-clamp-1">
+          {venue.name}
+        </h3>
+        <Badge href="#" class={getTypeColor(venue.type)} variant="secondary">
           {venue.type}
         </Badge>
       </div>
       
-      <!-- Content -->
-      <div class="space-y-3 flex-1">
-        <!-- Capacity and Events -->
-        <div class="flex items-center justify-between text-sm">
-          <div class="flex items-center gap-2">
-            <Users class="h-4 w-4 text-muted-foreground" />
-            <span>{venue.capacity.toLocaleString()} people</span>
-          </div>
-          <div class="flex items-center gap-2 text-muted-foreground">
-            <Calendar class="h-4 w-4" />
-            <span>{venue.upcomingEvents} events</span>
-          </div>
-        </div>
-        
-        <!-- Description -->
-        {#if venue.description}
-          <p class="text-sm text-muted-foreground line-clamp-2">
-            {venue.description}
-          </p>
-        {/if}
-        
-        <!-- Amenities -->
-        {#if venue.amenities && venue.amenities.length > 0}
-          <div class="flex flex-wrap gap-1">
-            {#each venue.amenities.slice(0, 3) as amenity}
-              <Badge variant="outline" class="text-xs px-2 py-0.5">
-                {amenity}
-              </Badge>
-            {/each}
-            {#if venue.amenities.length > 3}
-              <Badge variant="outline" class="text-xs px-2 py-0.5 text-muted-foreground">
-                +{venue.amenities.length - 3} more
-              </Badge>
-            {/if}
-          </div>
-        {/if}
+      <!-- Description -->
+      <p class="text-sm text-muted-foreground line-clamp-2">
+        {venue.description}
+      </p>
+    </div>
+
+    <!-- Location and Capacity -->
+    <div class="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
+      <div class="flex items-center gap-1">
+        <MapPin class="h-4 w-4" />
+        <span class="line-clamp-1">{venue.location}</span>
       </div>
-      
-      <!-- Action Buttons -->
-      <div class="flex gap-2 pt-4 mt-auto">
-        <Button variant="outline" size="sm" class="flex-1" on:click={handleEdit}>
-          <Edit class="h-4 w-4 mr-2" />
-          Edit
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          class="text-destructive hover:text-destructive hover:bg-destructive/10"
-          on:click={handleDelete}
-        >
-          <Trash2 class="h-4 w-4" />
-        </Button>
+      <div class="flex items-center gap-1">
+        <Users class="h-4 w-4" />
+        <span>{venue.capacity} people</span>
       </div>
     </div>
-  </div>
-  
-  <style>
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  </style>
-  
+
+    <!-- Rating and Bookings -->
+    <div class="flex items-center gap-4 mb-3 text-sm">
+      <div class="flex items-center gap-1">
+        <Star class="h-4 w-4 fill-yellow-400 text-yellow-400" />
+        <span class="font-medium">{venue.rating.toFixed(1)}</span>
+      </div>
+      <div class="flex items-center gap-1 text-muted-foreground">
+        <Calendar class="h-4 w-4" />
+        <span>{venue.totalBookings} bookings</span>
+      </div>
+    </div>
+
+    <!-- Amenities -->
+    {#if venue.amenities && venue.amenities.length > 0}
+      <div class="mb-4">
+        <div class="flex items-center gap-2 flex-wrap">
+          {#each venue.amenities.slice(0, 3) as amenity}
+            <div class="flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-xs">
+              {#if amenityIcons[amenity]}
+                <svelte:component this={amenityIcons[amenity]} class="h-3 w-3" />
+              {/if}
+              <span>{amenity}</span>
+            </div>
+          {/each}
+          {#if venue.amenities.length > 3}
+            <Badge href="#" variant="outline" class="text-xs">
+              +{venue.amenities.length - 3} more
+            </Badge>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2 pt-2 border-t">
+      <Button
+        variant="outline"
+        size="sm"
+        class="flex-1"
+        disabled={false}
+        on:click={handleViewDetails}
+        type="button"
+      >
+        <Eye class="h-4 w-4 mr-1" />
+        View
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        class="flex-1"
+        disabled={false}
+        on:click={handleEdit}
+        type="button"
+      >
+        <Edit class="h-4 w-4 mr-1" />
+        Edit
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        class="text-red-600 hover:text-red-700 hover:bg-red-50"
+        disabled={false}
+        on:click={handleDelete}
+        type="button"
+      >
+        <Trash2 class="h-4 w-4" />
+      </Button>
+    </div>
+
+    <!-- Availability Indicator -->
+    <div class="mt-3 pt-3 border-t">
+      <div class="flex items-center justify-between text-xs text-muted-foreground">
+        <span>Availability:</span>
+        <div class="flex items-center gap-1">
+          {#each Object.entries(venue.availability) as [day, schedule]}
+            <div 
+              class="w-2 h-2 rounded-full {schedule.available ? 'bg-green-400' : 'bg-red-400'}"
+              title="{day}: {schedule.available ? `${schedule.start}-${schedule.end}` : 'Unavailable'}"
+            ></div>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
