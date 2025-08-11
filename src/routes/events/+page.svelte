@@ -2,6 +2,7 @@
 	import AppEventCard from "$lib/components/app-event-card.svelte";
 	import AppEventDetailsModal from "$lib/components/app-event-details-modal.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import { goto } from '$app/navigation';
 	// Import Svelte's transition and animation functions
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
@@ -130,6 +131,10 @@
 		showEventSizeDropdown = false;
 	}
 
+	function navigateToAddEvent() {
+		goto('/events/add');
+	}
+
 	// Close dropdowns when clicking outside
 	function handleClickOutside(event) {
 		if (!event.target.closest('.dropdown-container')) {
@@ -143,8 +148,14 @@
 <svelte:window onclick={handleClickOutside} />
 
 <div class="p-6 space-y-6">
-	<!-- Page title -->
-	<h1 class="text-3xl font-bold tracking-tight">Events</h1>
+	<!-- Page title ve Add Event butonu -->
+	<div class="flex justify-between items-center">
+		<h1 class="text-3xl font-bold tracking-tight">Events</h1>
+		<Button onclick={navigateToAddEvent} disabled={false} class="flex items-center gap-2">
+			<span class="text-lg">+</span>
+			Add Event
+		</Button>
+	</div>
 
 	<!-- Search bar -->
 	<div class="relative">
