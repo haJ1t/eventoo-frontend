@@ -206,9 +206,21 @@
         return false;
       }
       if (filters.capacity) {
-        const [min, max] = filters.capacity.split('-').map(Number);
-        if (max && (venue.capacity < min || venue.capacity > max)) return false;
-        if (!max && filters.capacity === '100+' && venue.capacity < 100) return false;
+        const capacity = venue.capacity;
+        switch (filters.capacity) {
+          case '0-50':
+            if (capacity > 50) return false;
+            break;
+          case '51-100':
+            if (capacity < 51 || capacity > 100) return false;
+            break;
+          case '101-300':
+            if (capacity < 101 || capacity > 300) return false;
+            break;
+          case '300+':
+            if (capacity <= 300) return false;
+            break;
+        }
       }
       return true;
     });
@@ -265,6 +277,16 @@
     console.log('Clearing all filters');
     filters = { search: '', type: '', status: '', capacity: '', location: '' };
     applyFilters();
+  }
+
+  // Filter event handlers
+  function handleFilterChange(event: CustomEvent) {
+    filters = event.detail;
+    applyFilters();
+  }
+
+  function handleFilterClose() {
+    showFilters = false;
   }
 
   // Reactive effect
@@ -384,12 +406,13 @@
     </div>
   </div>
 
-  <!-- Filters Panel -->
-  {#if showFilters}
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-      <VenueFilters bind:filters />
-    </div>
-  {/if}
+  <!-- Filters Panel - DÜZELTİLDİ! -->
+  <VenueFilters 
+    bind:filters={filters}
+    bind:isOpen={showFilters}
+    on:filter={handleFilterChange}
+    on:close={handleFilterClose}
+  />
 
   <!-- Loading State -->
   {#if loading}
@@ -439,14 +462,12 @@
       {:else if viewMode === 'grid'}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {#each filteredVenues as venue (venue.id)}
-            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
       {:else}
         <div class="space-y-4">
           {#each filteredVenues as venue (venue.id)}
-            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
