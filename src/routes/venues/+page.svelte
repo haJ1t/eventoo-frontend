@@ -334,6 +334,17 @@
     viewMode = mode;
     console.log('View mode changed to:', mode);
   }
+
+  function handleClearFilters() {
+    console.log('Clearing all filters');
+    filters = { search: '', type: '', status: '', capacity: '', location: '' };
+    applyFilters();
+  }
+
+  // Reactive effect
+  $effect(() => {
+    applyFilters();
+  });
 </script>
 
 <svelte:head>
@@ -525,13 +536,15 @@
         </Card>
       {:else if viewMode === 'grid'}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {#each paginatedVenues as venue (venue.id)}
+          {#each filteredVenues as venue (venue.id)}
+            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
       {:else}
         <div class="space-y-4">
-          {#each paginatedVenues as venue (venue.id)}
+          {#each filteredVenues as venue (venue.id)}
+            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
