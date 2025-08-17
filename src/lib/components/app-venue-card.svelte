@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Card, CardContent, CardHeader } from "$lib/components/ui/card";
+  import { Card, CardContent } from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { 
@@ -32,7 +32,7 @@
     amenities: string[];
     images: string[];
     pricePerHour: number;
-    availability: {
+    availability?: {
       monday: { start: string; end: string; available: boolean };
       tuesday: { start: string; end: string; available: boolean };
       wednesday: { start: string; end: string; available: boolean };
@@ -81,44 +81,47 @@
       'Meeting Room': 'bg-orange-100 text-orange-800',
       'Auditorium': 'bg-indigo-100 text-indigo-800',
       'Banquet Hall': 'bg-pink-100 text-pink-800',
+      'Conference': 'bg-blue-100 text-blue-800',
+      'Wedding': 'bg-purple-100 text-purple-800',
+      'Party': 'bg-orange-100 text-orange-800',
+      'Corporate': 'bg-indigo-100 text-indigo-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   }
 </script>
 
-<Card class="group hover:shadow-lg transition-shadow duration-200">
-  <CardHeader class="p-0">
-    <!-- Image -->
-    <div class="relative h-48 overflow-hidden rounded-t-lg">
-      {#if venue.images && venue.images.length > 0}
-        <img 
-          src={venue.images[0]} 
-          alt={venue.name}
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-        />
-      {:else}
-        <div class="w-full h-full bg-muted flex items-center justify-center">
-          <MapPin class="h-12 w-12 text-muted-foreground" />
-        </div>
-      {/if}
-      
-      <!-- Status Badge -->
-      <div class="absolute top-3 left-3">
-        <Badge href="#" class={getStatusColor(venue.status)}>
-          {venue.status.charAt(0).toUpperCase() + venue.status.slice(1)}
-        </Badge>
+<div class="group bg-white rounded-lg border shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+  <!-- Image -->
+  <div class="relative h-48 overflow-hidden">
+    {#if venue.images && venue.images.length > 0}
+      <img 
+        src={venue.images[0]} 
+        alt={venue.name}
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+      />
+    {:else}
+      <div class="w-full h-full bg-muted flex items-center justify-center">
+        <MapPin class="h-12 w-12 text-muted-foreground" />
       </div>
-      
-      <!-- Price -->
-      <div class="absolute top-3 right-3">
-        <Badge href="#" variant="secondary" class="bg-white/90 text-foreground">
-          ${venue.pricePerHour}/hr
-        </Badge>
-      </div>
+    {/if}
+    
+    <!-- Status Badge -->
+    <div class="absolute top-3 left-3">
+      <Badge href="#" class={getStatusColor(venue.status)}>
+        {venue.status.charAt(0).toUpperCase() + venue.status.slice(1)}
+      </Badge>
     </div>
-  </CardHeader>
+    
+    <!-- Price -->
+    <div class="absolute top-3 right-3">
+      <Badge href="#" variant="secondary" class="bg-white/90 text-foreground">
+        ${venue.pricePerHour}/hr
+      </Badge>
+    </div>
+  </div>
 
-  <CardContent class="p-4">
+  <!-- Content -->
+  <div class="p-4">
     <!-- Title and Type -->
     <div class="space-y-2 mb-3">
       <div class="flex items-start justify-between gap-2">
@@ -218,18 +221,20 @@
     </div>
 
     <!-- Availability Indicator -->
-    <div class="mt-3 pt-3 border-t">
-      <div class="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Availability:</span>
-        <div class="flex items-center gap-1">
-          {#each Object.entries(venue.availability) as [day, schedule]}
-            <div 
-              class="w-2 h-2 rounded-full {schedule.available ? 'bg-green-400' : 'bg-red-400'}"
-              title="{day}: {schedule.available ? `${schedule.start}-${schedule.end}` : 'Unavailable'}"
-            ></div>
-          {/each}
+    {#if venue.availability}
+      <div class="mt-3 pt-3 border-t">
+        <div class="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Availability:</span>
+          <div class="flex items-center gap-1">
+            {#each Object.entries(venue.availability) as [day, schedule]}
+              <div 
+                class="w-2 h-2 rounded-full {schedule.available ? 'bg-green-400' : 'bg-red-400'}"
+                title="{day}: {schedule.available ? `${schedule.start}-${schedule.end}` : 'Unavailable'}"
+              ></div>
+            {/each}
+          </div>
         </div>
       </div>
-    </div>
-  </CardContent>
-</Card>
+    {/if}
+  </div>
+</div>
