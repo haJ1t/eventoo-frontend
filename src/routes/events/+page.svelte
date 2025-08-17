@@ -1,25 +1,37 @@
 <script lang="ts">
 	import AppEventCard from "$lib/components/app-event-card.svelte";
 	import AppEventDetailsModal from "$lib/components/app-event-details-modal.svelte";
+	import AppSearchBar from "$lib/components/app-search-bar.svelte";
+	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
+	import AppFilterTags from "$lib/components/app-filter-tags.svelte";
+	import * as Pagination from "$lib/components/ui/pagination/index.js";
+	import { MapPin, User, User2, Tag } from "@lucide/svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { goto } from '$app/navigation';
 	// Import Svelte's transition and animation functions
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 
-	let selectedEvent = $state(null);
+	let searchQuery = $state("");
 	let showModal = $state(false);
+    let selectedEvent = $state(null);
 	let selectedTags = $state([]);
-	let showLocationDropdown = $state(false);
-	let showEventSizeDropdown = $state(false);
-	let showTagsDropdown = $state(false);
+	let selectedLocations = $state([]);
+	let selectedEventSizes = $state([]);
+	// Add state to track which dropdown is currently open
+	let activeDropdown = $state(null); // 'location' | 'tags' | null
+
+	// Pagination state variables
+    let currentPage = $state(1);
+    let itemsPerPage = $state(4);
 
 	const events = [
 		{
 			id: 1,
 			title: "Tech Conference 2024",
 			date: "July 15, 2024",
-			location: "Grand Ballroom",
+			location: "San Francisco, CA",
+			size: "Medium (101-1000)",
 			attendees: "500 Attendees",
 			status: "Scheduled",
 			image: "/images/eventImages/tech.jpg",
@@ -33,7 +45,8 @@
 			id: 2,
 			title: "Summer Music Festival",
 			date: "August 20, 2024",
-			location: "Central Park",
+			location: "New York, NY",
+			size: "Mega (5000+)",
 			attendees: "10000 Attendees",
 			status: "Scheduled",
 			image: "/images/eventImages/music.jpeg",
@@ -47,7 +60,8 @@
 			id: 3,
 			title: "Art Exhibition",
 			date: "September 5, 2024",
-			location: "City Art Gallery",
+			location: "London, UK",
+			size: "Medium (101-1000)",
 			attendees: "200 Attendees",
 			status: "Scheduled",
 			image: "/images/eventImages/art.jpg",
@@ -55,14 +69,15 @@
 			organizer: "Art Gallery Network",
 			price: "$99",
 			category: "Art",
-			tags: ["Art", "Exhibition", "Culture"]
+			tags: ["Art", "Exhibition", "Cultural"]
 		},
 		{
 			id: 4,
 			title: "Ramadan Iftar Gathering",
 			date: "April 10, 2024",
-			location: "Community Center",
-			attendees: "150 Attendees",
+			location: "Istanbul, Turkey",
+			size: "Small (0-100)",
+			attendees: "100 Attendees",
 			status: "Scheduled",
 			image: "/images/eventImages/Iftar.jpg",
 			description: "Join us for a community iftar to break fast together during the holy month of Ramadan. Enjoy traditional foods and meaningful conversation.",
@@ -70,37 +85,143 @@
 			price: "Free",
 			category: "Cultural",
 			tags: ["Cultural", "Community", "Religious"]
+		},
+		{
+			id: 5,
+			title: "Startup Pitch Night",
+			date: "May 15, 2024",
+			location: "Austin, TX",
+			size: "Medium (101-1000)",
+			attendees: "300 Attendees",
+			status: "Scheduled",
+			image: "/images/eventImages/startup.jpg",
+			description: "Watch innovative startups pitch their ideas to top investors. Network with entrepreneurs and venture capitalists in Austin's thriving tech scene.",
+			organizer: "Austin Startup Hub",
+			price: "$50",
+			category: "Technology",
+			tags: ["Technology", "Networking", "Business"]
+		},
+		{
+			id: 6,
+			title: "Food & Wine Festival",
+			date: "June 8, 2024",
+			location: "Los Angeles, CA",
+			size: "Large (1000+)",
+			attendees: "2500 Attendees",
+			status: "Scheduled",
+			image: "/images/eventImages/food.jpg",
+			description: "Experience culinary excellence with tastings from top chefs, wine pairings, and cooking demonstrations. A feast for all your senses!",
+			organizer: "LA Culinary Arts",
+			price: "$150",
+			category: "Food & Drink",
+			tags: ["Food & Drink", "Festival", "Cultural"]
+		},
+		{
+			id: 7,
+			title: "Digital Art Exhibition",
+			date: "July 1, 2024",
+			location: "London, UK",
+			size: "Medium (101-1000)",
+			attendees: "500 Attendees",
+			status: "Scheduled",
+			image: "/images/eventImages/digital-art.jpg",
+			description: "Immerse yourself in the future of art with interactive installations, NFT galleries, and virtual reality experiences.",
+			organizer: "Digital Arts Collective",
+			price: "$25",
+			category: "Art",
+			tags: ["Art", "Technology", "Exhibition"]
+		},
+		{
+			id: 8,
+			title: "Wellness & Yoga Retreat",
+			date: "August 15, 2024",
+			location: "San Francisco, CA",
+			size: "Small (0-100)",
+			attendees: "50 Attendees",
+			status: "Scheduled",
+			image: "/images/eventImages/yoga.jpg",
+			description: "A weekend of mindfulness, yoga sessions, meditation workshops, and healthy living discussions in a peaceful urban setting.",
+			organizer: "Mindful Living Co",
+			price: "$199",
+			category: "Wellness",
+			tags: ["Wellness", "Community", "Workshop"]
 		}
 	];
 
 	// Dropdown options
-	const locationOptions = [
-		"All Locations",
-		"Grand Ballroom", 
-		"Central Park", 
-		"City Art Gallery",
-		"Convention Center",
-		"Downtown Plaza"
+		const locationOptions = [
+		"San Francisco, CA",
+		"Austin, TX",
+		"New York, NY",
+		"Los Angeles, CA",
+		"London, UK",
+		"Istanbul, Turkey"
 	];
 
 	const eventSizeOptions = [
-		"All Sizes",
 		"Small (0-100)",
 		"Medium (101-1000)", 
 		"Large (1000+)",
 		"Mega (5000+)"
 	];
 
-	// Tüm unique tag'ları topla
-	const allTags = $derived([...new Set(events.flatMap(event => event.tags || []))]);
+	// tag options
+	const tagOptions = [
+		"Technology",
+		"Music",
+		"Art",
+		"Food & Drink",
+		"Religious",
+		"Cultural",
+		"Networking",
+		"Festival",
+		"Exhibition"
+	];
 
-	// Filtrelenmiş event'lar
+	// Get all unique tags
+	//const allTags = $derived([...new Set(events.flatMap(event => event.tags || []))]);
+
+	// Filter organisers based on search query and selected tags
 	const filteredEvents = $derived(
-		selectedTags.length === 0 
-			? events 
-			: events.filter(event => 
-				selectedTags.some(tag => event.tags?.includes(tag))
-			)
+		events
+			.filter(event => {
+			const matchesSearch = searchQuery === "" || 
+				event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				event.location.toLowerCase().includes(searchQuery.toLowerCase());
+			
+			// Updated tag filter logic
+			const matchesTags = selectedTags.length === 0 ||
+				selectedTags.some(tag => event.tags?.includes(tag));
+
+			// Updated size filter logic
+			const matchesSize = selectedEventSizes.length === 0 ||
+				selectedEventSizes.some(size => event.size.includes(size));
+						
+			// Updated location filter logic
+			const matchesLocation = selectedLocations.length === 0 ||
+				selectedLocations.some(loc => event.location.includes(loc));
+
+			return matchesSearch && matchesTags && matchesSize && matchesLocation;
+			})
+		);
+
+	// Reset to page 1 when filters change
+	$effect(() => {
+		// Watch for changes in filters
+		searchQuery;
+		selectedTags;
+		selectedLocations;
+		selectedEventSizes;
+		
+		// Reset to page 1 when any filter changes
+		currentPage = 1;
+	});
+
+    // Derived store for paginated events
+    const paginatedEvents = $derived(
+		filteredEvents.slice(
+			(currentPage - 1) * itemsPerPage, currentPage * itemsPerPage
+		)
 	);
 
 	function handleViewDetails(event) {
@@ -118,30 +239,44 @@
 
 	function clearAllTags() {
 		selectedTags = [];
-		showTagsDropdown = false;
+		activeDropdown = null;
 	}
 
 	function selectLocation(location) {
 		console.log("Selected location:", location);
-		showLocationDropdown = false;
+		activeDropdown = null;
 	}
 
 	function selectEventSize(size) {
 		console.log("Selected event size:", size);
-		showEventSizeDropdown = false;
+		activeDropdown = null;
 	}
 
-	function navigateToAddEvent() {
-		goto('/events/add');
+	// Modified function to handle dropdown coordination
+	function handleDropdownToggle(dropdownType) {
+		if (activeDropdown === dropdownType) {
+			activeDropdown = null;
+		} else {
+			activeDropdown = dropdownType;
+		}
+	}
+
+	// Close all dropdowns
+	function closeAllDropdowns() {
+		activeDropdown = null;
 	}
 
 	// Close dropdowns when clicking outside
 	function handleClickOutside(event) {
 		if (!event.target.closest('.dropdown-container')) {
-			showLocationDropdown = false;
-			showEventSizeDropdown = false;
-			showTagsDropdown = false;
+			activeDropdown = null;
 		}
+	}
+
+	// Remove the handlePageChange and handlePerPageChange functions - they're not needed
+
+	function navigateToAddEvent() {
+		goto('/events/add');
 	}
 </script>
 
@@ -159,10 +294,11 @@
 
 	<!-- Search bar -->
 	<div class="relative">
-		<input
-			type="text"
-			placeholder="🔍 Search events"
-			class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+		<!-- Search bar -->
+			<AppSearchBar
+			bind:value={searchQuery}
+			placeholder="Search organisers by name or location"
+			showIcon={true}
 		/>
 	</div>
 
@@ -170,120 +306,54 @@
 	<div class="flex flex-wrap gap-4">
 		<!-- Location Dropdown -->
 		<div class="relative dropdown-container">
-			<Button 
-				variant="outline" 
-				onclick={() => showLocationDropdown = !showLocationDropdown}
-				class="flex items-center gap-2"
-				disabled={false}
-			>
-				Location 
-				<span class="transform transition-transform {showLocationDropdown ? 'rotate-180' : ''}">⌄</span>
-			</Button>
-			
-			{#if showLocationDropdown}
-				<div class="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-					{#each locationOptions as location}
-						<button
-							onclick={() => selectLocation(location)}
-							class="w-full px-4 py-2 text-left hover:bg-gray-100 first:rounded-t-md last:rounded-b-md transition-colors"
-						>
-							{location}
-						</button>
-					{/each}
-				</div>
-			{/if}
+			<AppFilterDropdown
+				bind:selectedValues={selectedLocations}
+				options={locationOptions}
+				label="Location"
+				icon={MapPin}
+				isOpen={activeDropdown === 'location'}
+				onToggle={() => handleDropdownToggle('location')}
+			/>
 		</div>
 
 		<!-- Event Size Dropdown -->
 		<div class="relative dropdown-container">
-			<Button 
-				variant="outline" 
-				onclick={() => showEventSizeDropdown = !showEventSizeDropdown}
-				class="flex items-center gap-2"
-				disabled={false}
-			>
-				Event Size 
-				<span class="transform transition-transform {showEventSizeDropdown ? 'rotate-180' : ''}">⌄</span>
-			</Button>
+			<AppFilterDropdown
+            	bind:selectedValues={selectedEventSizes}
+				options={eventSizeOptions}
+				label="Event Size"
+				icon={User2}
+				isOpen={activeDropdown === 'size'}
+				onToggle={() => handleDropdownToggle('size')}
+			/>
 			
-			{#if showEventSizeDropdown}
-				<div class="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-					{#each eventSizeOptions as size}
-						<button
-							onclick={() => selectEventSize(size)}
-							class="w-full px-4 py-2 text-left hover:bg-gray-100 first:rounded-t-md last:rounded-b-md transition-colors"
-						>
-							{size}
-						</button>
-					{/each}
-				</div>
-			{/if}
 		</div>
 
 		<!-- Tags Dropdown -->
-		<div class="relative dropdown-container">
-			<Button 
-				variant="outline" 
-				onclick={() => showTagsDropdown = !showTagsDropdown}
-				class="flex items-center gap-2"
-				disabled={false}
-			>
-				Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-				<span class="transform transition-transform {showTagsDropdown ? 'rotate-180' : ''}">⌄</span>
-			</Button>
-			
-			{#if showTagsDropdown}
-				<div class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">				
-					<!-- Tag options -->
-					<div class="p-2 border-b border-gray-100">
-						{#each allTags as tag}
-							<button
-								onclick={() => toggleTag(tag)}
-								class="w-full px-3 py-2 text-left rounded-md transition-colors flex items-center justify-between
-									{selectedTags.includes(tag) 
-										? 'bg-primary text-primary-foreground' 
-										: 'hover:bg-gray-100'
-									}"
-							>
-								<span>{tag}</span>
-								{#if selectedTags.includes(tag)}
-									<span class="text-sm">✓</span>
-								{/if}
-							</button>
-						{/each}
-					</div>
-					
-					<!-- Clear button -->
-					{#if selectedTags.length > 0}
-						<div class="p-2 space-y-1">
-							<button 
-								onclick={clearAllTags}
-								class="text-xs text-red-500 hover:text-red-700 underline"
-							>
-								Clear All ({selectedTags.length})
-							</button>
-						</div>
-					{/if}
-				</div>
-			{/if}
+		<div class="dropdown-container">
+			<AppFilterTags
+				bind:selectedTags
+				availableTags={tagOptions}
+				label="Tags"
+				isOpen={activeDropdown === 'tags'}
+				onToggle={() => handleDropdownToggle('tags')}
+			/>
 		</div>
 	</div>
 
 	<!-- Event cards -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-		{#each filteredEvents as event (event.id)}
-			<div 
-				animate:flip={{duration: 500}}
-				in:fade={{duration: 300}}
-				out:fade={{duration: 200}}
-			>
-				<AppEventCard
-					{event}
-					onclick={handleViewDetails}
-				/>
-			</div>
-		{/each}
-	</div>
+        {#each paginatedEvents as event (event.id)}
+            <div 
+                animate:flip={{duration: 500}}
+            >
+                <AppEventCard
+                    {event}
+                    onclick={handleViewDetails}
+                />
+            </div>
+        {/each}
+    </div>
 
 	<!-- No results message -->
 	{#if filteredEvents.length === 0}
@@ -294,7 +364,39 @@
 			</button>
 		</div>
 	{/if}
+
+	<Pagination.Root 
+		count={filteredEvents.length} 
+		perPage={itemsPerPage}
+		bind:page={currentPage}
+	>
+		{#snippet children({ pages, currentPage: paginationCurrentPage })}
+		  <Pagination.Content>
+			<Pagination.Item>
+			  <Pagination.PrevButton />
+			</Pagination.Item>
+			{#each pages as page (page.key)}
+			  {#if page.type === "ellipsis"}
+				<Pagination.Item class="bg-primary text-white">
+				  <Pagination.Ellipsis />
+				</Pagination.Item>
+			  {:else}
+				<Pagination.Item>
+				  <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+					{page.value}
+				  </Pagination.Link>
+				</Pagination.Item>
+			  {/if}
+			{/each}
+			<Pagination.Item>
+			  <Pagination.NextButton />
+			</Pagination.Item>
+		  </Pagination.Content>
+		{/snippet}
+	</Pagination.Root>
 </div>
+
+
 
 <!-- Modal -->
 {#if showModal && selectedEvent}

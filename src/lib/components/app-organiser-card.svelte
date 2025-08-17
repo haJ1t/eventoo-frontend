@@ -32,7 +32,7 @@
 	<CardContent class="space-y-2">
 		<div class="flex items-center text-sm text-gray-600">
 			<Building2 class="w-4 h-4 mr-2" />
-			{organiser.category}
+			{organiser.tags}
 		</div>
 		<div class="flex items-center text-sm text-gray-600">
 			<MapPin class="w-4 h-4 mr-2" />

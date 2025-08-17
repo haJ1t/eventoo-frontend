@@ -1,18 +1,28 @@
 <script lang="ts">
 	import AppOrganiserCard from "$lib/components/app-organiser-card.svelte";
 	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
+	import AppSearchBar from "$lib/components/app-search-bar.svelte";
+	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
+	import AppFilterTags from "$lib/components/app-filter-tags.svelte";
+	import * as Pagination from "$lib/components/ui/pagination/index.js";
 	import { Button } from "$lib/components/ui/button";
 	// Import Svelte's transition and animation functions
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import { Building2, MapPin, Award, Search } from "lucide-svelte";
-
+	
+	let searchQuery = $state("");
 	let selectedOrganiser = $state(null);
 	let showModal = $state(false);
-	let selectedCategories = $state([]);
-	let showLocationDropdown = $state(false);
-	let showCategoryDropdown = $state(false);
-	let searchQuery = $state("");
+	let selectedTags = $state([]);
+	let selectedLocations = $state([]); // Changed from selectedLocation to selectedLocations array
+	
+	// Pagination state variables
+    let currentPage = $state(1);
+    let itemsPerPage = $state(2);
+
+	// Add state to track which dropdown is currently open
+	let activeDropdown = $state(null); // 'location' | 'tags' | null
 
 	// Sample organisers data with updated image paths
 	const organisers = [
@@ -20,7 +30,7 @@
 			id: 1,
 			name: "Tech Events Inc.",
 			location: "San Francisco, CA",
-			category: "Technology",
+			tag: "Technology",
 			eventsCount: "12 Events",
 			rating: 4.8,
 			image: "/images/companyImages/Company_A.jpg",
@@ -35,13 +45,13 @@
 				email: "info@techevents.com",
 				phone: "+1 (555) 123-4567"
 			},
-			categories: ["Technology", "Networking", "Professional"]
+			tags: ["Technology", "Networking", "Professional"]
 		},
 		{
 			id: 2,
 			name: "Music Events Co.",
 			location: "Austin, TX",
-			category: "Music",
+			tag: "Music",
 			eventsCount: "24 Events",
 			rating: 4.6,
 			image: "/images/companyImages/Company_B.jpg",
@@ -56,13 +66,13 @@
 				email: "bookings@musiceventsco.com",
 				phone: "+1 (555) 987-6543"
 			},
-			categories: ["Music", "Entertainment", "Festivals"]
+			tags: ["Music", "Entertainment", "Festivals"]
 		},
 		{
 			id: 3,
 			name: "Mentor Wise",
 			location: "London, UK",
-			category: "Education",
+			tag: "Education",
 			eventsCount: "8 Events",
 			rating: 4.9,
 			image: "/images/companyImages/MentorWise.png",
@@ -77,13 +87,13 @@
 				email: "info@mentorwise.org",
 				phone: "+1 (555) 456-7890"
 			},
-			categories: ["Art", "Culture", "Exhibition"]
+			tags: ["Art", "Culture", "Exhibition"]
 		},
 		{
 			id: 4,
 			name: "Sohbet Society",
 			location: "Istanbul, Turkey",
-			category: "Cultural",
+			tag: "Cultural",
 			eventsCount: "15 Events",
 			rating: 4.7,
 			image: "/images/companyImages/SohbetSociety.png",
@@ -98,22 +108,23 @@
 				email: "connect@sohbetsociety.org",
 				phone: "+90 (212) 555-1234"
 			},
-			categories: ["Cultural", "Community", "Education"]
+			tags: ["Cultural", "Community", "Education"]
 		}
 	];
 
 	// Location options
 	const locationOptions = [
-		"All Locations",
 		"San Francisco, CA",
 		"Austin, TX",
 		"New York, NY",
 		"Chicago, IL",
-		"Los Angeles, CA"
+		"Los Angeles, CA",
+		"London, UK",
+		"Istanbul, Turkey"
 	];
 
-	// Category options
-	const categoryOptions = [
+	// tag options
+	const tagOptions = [
 		"Technology",
 		"Music",
 		"Art",
@@ -124,10 +135,11 @@
 		"Entertainment"
 	];
 
-	// Get all unique categories
-	const allCategories = $derived([...new Set(organisers.flatMap(organiser => organiser.categories || []))]);
+	// Get all unique tags
+	//const allTags = $derived([...new Set(organisers.flatMap(organiser => organiser.tags || []))]);
 
-	// Filter organisers based on search query and selected categories
+	// Filter organisers based on search query and selected tags
+	// Update the filter logic to handle multiple locations
 	const filteredOrganisers = $derived(
 		organisers
 			.filter(organiser => {
@@ -135,18 +147,35 @@
 				organiser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				organiser.location.toLowerCase().includes(searchQuery.toLowerCase());
 
-			const matchesCategories = selectedCategories.length === 0 ||
-				selectedCategories.some(cat => organiser.categories?.includes(cat));
+			const matchesTags = selectedTags.length === 0 ||
+				selectedTags.some(tag => organiser.tags?.includes(tag));
 
-			return matchesSearch && matchesCategories;
+			// Updated location filter logic
+			const matchesLocation = selectedLocations.length === 0 ||
+				selectedLocations.some(loc => organiser.location.includes(loc));
+
+			return matchesSearch && matchesTags && matchesLocation;
 			})
-			.sort((a, b) => b.featured - a.featured) // Featured come first
+			.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) // Featured come first
 		);
 
 
-	// Featured organisers
-	const featuredOrganisers = $derived(
-		organisers.filter(organiser => organiser.featured)
+	// Reset to page 1 when filters change
+	$effect(() => {
+		// Watch for changes in filters
+		searchQuery;
+		selectedTags;
+		selectedLocations;
+		
+		// Reset to page 1 when any filter changes
+		currentPage = 1;
+	});
+
+    // Derived store for paginated organisers (fix variable name)
+    const paginatedOrganisers = $derived(
+		filteredOrganisers.slice(
+			(currentPage - 1) * itemsPerPage, currentPage * itemsPerPage
+		)
 	);
 
 	function handleViewDetails(organiser) {
@@ -154,29 +183,42 @@
 		showModal = true;
 	}
 
-	function toggleCategory(category) {
-		if (selectedCategories.includes(category)) {
-			selectedCategories = selectedCategories.filter(c => c !== category);
+	function toggleCategory(tag) {
+		if (selectedTags.includes(tag)) {
+			selectedTags = selectedTags.filter(c => c !== tag);
 		} else {
-			selectedCategories = [...selectedCategories, category];
+			selectedTags = [...selectedTags, tag];
 		}
 	}
 
-	function clearAllCategories() {
-		selectedCategories = [];
-		showCategoryDropdown = false;
+	function clearAllTags() {
+		selectedTags = [];
+		activeDropdown = null;
 	}
 
 	function selectLocation(location) {
 		console.log("Selected location:", location);
-		showLocationDropdown = false;
+		activeDropdown = null;
 	}
 
-	// Close dropdowns when clicking outside
+	// Modified function to handle dropdown coordination
+	function handleDropdownToggle(dropdownType) {
+		if (activeDropdown === dropdownType) {
+			activeDropdown = null;
+		} else {
+			activeDropdown = dropdownType;
+		}
+	}
+
+	// Close all dropdowns
+	function closeAllDropdowns() {
+		activeDropdown = null;
+	}
+
+	// Modified click outside handler
 	function handleClickOutside(event) {
 		if (!event.target.closest('.dropdown-container')) {
-			showLocationDropdown = false;
-			showCategoryDropdown = false;
+			closeAllDropdowns();
 		}
 	}
 </script>
@@ -187,105 +229,45 @@
 	<!-- Page title -->
 	<h1 class="text-3xl font-bold tracking-tight">Organisers</h1>
 
-
-
 	<!-- Search bar -->
-	<div class="relative">
-		<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-			<Search class="h-5 w-5 text-gray-400" />
-		</div>
-		<input
-			type="text"
-			placeholder="Search organisers by name or location"
-			class="w-full pl-10 px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-			bind:value={searchQuery}
-		/>
-	</div>
+	<AppSearchBar
+		bind:value={searchQuery}
+		placeholder="Search organisers by name or location"
+		showIcon={true}
+	/>
 
 	<!-- Filters -->
 	<div class="flex flex-wrap gap-4">
 		<!-- Location Dropdown -->
-		<div class="relative dropdown-container">
-			<Button 
-				variant="outline" 
-				onclick={() => showLocationDropdown = !showLocationDropdown}
-				class="flex items-center gap-2"
-			>
-				<MapPin class="h-4 w-4" />
-				Location 
-				<span class="transform transition-transform {showLocationDropdown ? 'rotate-180' : ''}">⌄</span>
-			</Button>
-			
-			{#if showLocationDropdown}
-				<div class="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-					{#each locationOptions as location}
-						<button
-							onclick={() => selectLocation(location)}
-							class="w-full px-4 py-2 text-left hover:bg-gray-100 first:rounded-t-md last:rounded-b-md transition-colors"
-						>
-							{location}
-						</button>
-					{/each}
-				</div>
-			{/if}
+		<div class="dropdown-container">
+			<AppFilterDropdown
+				bind:selectedValues={selectedLocations}
+				options={locationOptions}
+				label="Location"
+				icon={MapPin}
+				isOpen={activeDropdown === 'location'}
+				onToggle={() => handleDropdownToggle('location')}
+			/>
 		</div>
 
-		<!-- Category Dropdown -->
-		<div class="relative dropdown-container">
-			<Button 
-				variant="outline" 
-				onclick={() => showCategoryDropdown = !showCategoryDropdown}
-				class="flex items-center gap-2"
-			>
-				<Building2 class="h-4 w-4" />
-				Category {selectedCategories.length > 0 ? `(${selectedCategories.length})` : ''}
-				<span class="transform transition-transform {showCategoryDropdown ? 'rotate-180' : ''}">⌄</span>
-			</Button>
-			
-			{#if showCategoryDropdown}
-				<div class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-					<!-- Category options -->
-					<div class="p-2 border-b border-gray-100">
-						{#each allCategories as category}
-							<button
-								onclick={() => toggleCategory(category)}
-								class="w-full px-3 py-2 text-left rounded-md transition-colors flex items-center justify-between
-									{selectedCategories.includes(category) 
-										? 'bg-primary text-primary-foreground' 
-										: 'hover:bg-gray-100'
-									}"
-							>
-								<span>{category}</span>
-								{#if selectedCategories.includes(category)}
-									<span class="text-sm">✓</span>
-								{/if}
-							</button>
-						{/each}
-					</div>
-					
-					<!-- Clear button -->
-					{#if selectedCategories.length > 0}
-						<div class="p-2 space-y-1">
-							<button 
-								onclick={clearAllCategories}
-								class="text-xs text-red-500 hover:text-red-700 underline"
-							>
-								Clear All ({selectedCategories.length})
-							</button>
-						</div>
-					{/if}
-				</div>
-			{/if}
+		<!-- Tags Dropdown -->
+		<div class="dropdown-container">
+			<AppFilterTags
+				bind:selectedTags
+				availableTags={tagOptions}
+				label="Tags"
+				isOpen={activeDropdown === 'tags'}
+				onToggle={() => handleDropdownToggle('tags')}
+			/>
 		</div>
 	</div>
 
 	<!-- Organiser cards (including featured) -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-		{#each filteredOrganisers as organiser (organiser.id)}
+		{#each paginatedOrganisers as organiser (organiser.id)}
 			<div 
 				animate:flip={{duration: 500}}
-				in:fade={{duration: 300}}
-				out:fade={{duration: 200}}
+                in:fade={{duration: 300}}
 			>
 				<AppOrganiserCard
 					{organiser}
@@ -295,18 +277,46 @@
 			</div>
 		{/each}
 	</div>
-	
-
 
 	<!-- No results message -->
 	{#if filteredOrganisers.length === 0}
 		<div class="text-center py-12">
 			<p class="text-gray-500">No organisers found with selected filters.</p>
-			<button onclick={clearAllCategories} class="text-primary hover:underline mt-2">
+			<button onclick={clearAllTags} class="text-primary hover:underline mt-2">
 				Clear filters
 			</button>
 		</div>
 	{/if}
+
+	<Pagination.Root 
+		count={filteredOrganisers.length} 
+		perPage={itemsPerPage}
+		bind:page={currentPage}
+	>
+		{#snippet children({ pages, currentPage: paginationCurrentPage })}
+		  <Pagination.Content>
+			<Pagination.Item>
+			  <Pagination.PrevButton />
+			</Pagination.Item>
+			{#each pages as page (page.key)}
+			  {#if page.type === "ellipsis"}
+				<Pagination.Item class="bg-primary text-white">
+				  <Pagination.Ellipsis />
+				</Pagination.Item>
+			  {:else}
+				<Pagination.Item>
+				  <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+					{page.value}
+				  </Pagination.Link>
+				</Pagination.Item>
+			  {/if}
+			{/each}
+			<Pagination.Item>
+			  <Pagination.NextButton />
+			</Pagination.Item>
+		  </Pagination.Content>
+		{/snippet}
+	</Pagination.Root>
 </div>
 
 <!-- Modal -->
