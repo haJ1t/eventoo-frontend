@@ -48,6 +48,15 @@
       totalBookings: 156,
       images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 150,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-01-15T10:00:00Z',
       updatedAt: '2024-03-01T14:30:00Z',
       tags: ['Technology', 'Business', 'Professional']
@@ -67,6 +76,15 @@
       totalBookings: 89,
       images: ['https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 120,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-02-01T09:00:00Z',
       updatedAt: '2024-03-15T11:20:00Z',
       tags: ['Wedding', 'Celebration', 'Elegant']
@@ -86,6 +104,15 @@
       totalBookings: 45,
       images: ['https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 90,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-02-15T11:00:00Z',
       updatedAt: '2024-03-08T13:15:00Z',
       tags: ['Outdoor', 'Garden', 'Natural']
@@ -105,6 +132,15 @@
       totalBookings: 234,
       images: ['https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 250,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-01-20T14:00:00Z',
       updatedAt: '2024-03-10T16:45:00Z',
       tags: ['Luxury', 'Wedding', 'Premium']
@@ -124,6 +160,15 @@
       totalBookings: 67,
       images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 180,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-02-10T12:00:00Z',
       updatedAt: '2024-03-05T09:30:00Z',
       tags: ['Technology', 'Conference', 'Modern']
@@ -143,6 +188,15 @@
       totalBookings: 92,
       images: ['https://images.unsplash.com/photo-1551818255-e6e10975bc17?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 160,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-02-05T13:00:00Z',
       updatedAt: '2024-03-18T15:30:00Z',
       tags: ['Rooftop', 'City View', 'Party']
@@ -162,6 +216,15 @@
       totalBookings: 123,
       images: ['https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 75,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-01-25T08:00:00Z',
       updatedAt: '2024-03-12T10:00:00Z',
       tags: ['Corporate', 'Business', 'Professional']
@@ -181,6 +244,15 @@
       totalBookings: 78,
       images: ['https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 200,
+      availability: {
+        monday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: true },
+      },
       createdAt: '2024-01-10T15:00:00Z',
       updatedAt: '2024-02-28T12:00:00Z',
       tags: ['Beach', 'Wedding', 'Ocean View']
@@ -542,30 +614,31 @@
     <!-- Pagination -->
     {#if filteredVenues.length > itemsPerPage}
       <Pagination.Root 
+        class=""
         count={filteredVenues.length} 
         perPage={itemsPerPage}
         bind:page={currentPage}
       >
         {#snippet children({ pages, currentPage: paginationCurrentPage })}
-          <Pagination.Content>
+          <Pagination.Content class="">
             <Pagination.Item>
-              <Pagination.PrevButton />
+              <Pagination.PrevButton class="" children={null} />
             </Pagination.Item>
             {#each pages as page (page.key)}
               {#if page.type === "ellipsis"}
                 <Pagination.Item class="bg-primary text-white">
-                  <Pagination.Ellipsis />
+                  <Pagination.Ellipsis class="" />
                 </Pagination.Item>
               {:else}
                 <Pagination.Item>
-                  <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+                  <Pagination.Link class="" {page} isActive={paginationCurrentPage === page.value}>
                     {page.value}
                   </Pagination.Link>
                 </Pagination.Item>
               {/if}
             {/each}
             <Pagination.Item>
-              <Pagination.NextButton />
+              <Pagination.NextButton class="" children={null} />
             </Pagination.Item>
           </Pagination.Content>
         {/snippet}

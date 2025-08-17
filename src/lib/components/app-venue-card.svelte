@@ -22,14 +22,16 @@
   export let venue: {
     id: string;
     name: string;
-    description: string;
     location: string;
     capacity: number;
+    image: string;
     type: string;
-    status: 'active' | 'inactive';
+    status: string // 'active' | 'inactive';
+    upcomingEvents: number;
+    description: string;
+    amenities: string[];
     rating: number;
     totalBookings: number;
-    amenities: string[];
     images: string[];
     pricePerHour: number;
     availability?: {
@@ -43,6 +45,7 @@
     };
     createdAt: string;
     updatedAt: string;
+    tags: string[];
   };
 
   // Event handlers

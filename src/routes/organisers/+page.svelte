@@ -400,31 +400,32 @@
 		</div>
 	{/if}
 
-	<Pagination.Root 
+	<Pagination.Root
+		class=""
 		count={filteredOrganisers.length} 
 		perPage={itemsPerPage}
 		bind:page={currentPage}
 	>
 		{#snippet children({ pages, currentPage: paginationCurrentPage })}
-		  <Pagination.Content>
+		  <Pagination.Content class="">
 			<Pagination.Item>
-			  <Pagination.PrevButton />
+			  <Pagination.PrevButton class="" children={null}/>
 			</Pagination.Item>
 			{#each pages as page (page.key)}
 			  {#if page.type === "ellipsis"}
 				<Pagination.Item class="bg-primary text-white">
-				  <Pagination.Ellipsis />
+				  <Pagination.Ellipsis class=""/>
 				</Pagination.Item>
 			  {:else}
 				<Pagination.Item>
-				  <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+				  <Pagination.Link class="" {page} isActive={paginationCurrentPage === page.value}>
 					{page.value}
 				  </Pagination.Link>
 				</Pagination.Item>
 			  {/if}
 			{/each}
 			<Pagination.Item>
-			  <Pagination.NextButton />
+			  <Pagination.NextButton class="" children={null}/>
 			</Pagination.Item>
 		  </Pagination.Content>
 		{/snippet}
