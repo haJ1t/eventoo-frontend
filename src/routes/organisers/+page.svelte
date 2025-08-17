@@ -3,13 +3,14 @@
 	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
-	import AppFilterTags from "$lib/components/app-filter-tags.svelte";
+	// Remove this import:
+	// import AppFilterTags from "$lib/components/app-filter-tags.svelte";
 	import * as Pagination from "$lib/components/ui/pagination/index.js";
 	import { Button } from "$lib/components/ui/button";
 	// Import Svelte's transition and animation functions
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
-	import { Building2, MapPin, Award, Search } from "lucide-svelte";
+	import { Building2, MapPin, Award, Search, TagIcon } from "lucide-svelte";
 	
 	let searchQuery = $state("");
 	let selectedOrganiser = $state(null);
@@ -19,7 +20,7 @@
 	
 	// Pagination state variables
     let currentPage = $state(1);
-    let itemsPerPage = $state(2);
+    let itemsPerPage = $state(4);
 
 	// Add state to track which dropdown is currently open
 	let activeDropdown = $state(null); // 'location' | 'tags' | null
@@ -92,7 +93,7 @@
 		{
 			id: 4,
 			name: "Sohbet Society",
-			location: "Istanbul, Turkey",
+			location: "Istanbul, Turkey", 
 			tag: "Cultural",
 			eventsCount: "15 Events",
 			rating: 4.7,
@@ -109,6 +110,111 @@
 				phone: "+90 (212) 555-1234"
 			},
 			tags: ["Cultural", "Community", "Education"]
+		},
+		{
+			id: 5,
+			name: "Sports United",
+			location: "Chicago, IL",
+			tag: "Sports",
+			eventsCount: "20 Events",
+			rating: 4.5,
+			image: "/images/companyImages/SportsUnited.png",
+			featured: false,
+			bio: "Uniting communities through sports events, tournaments, and fitness challenges for all skill levels and ages.",
+			socialMedia: {
+				twitter: "@sportsunited",
+				instagram: "sportsunited",
+				website: "www.sportsunited.com"
+			},
+			contact: {
+				email: "info@sportsunited.com",
+				phone: "+1 (312) 555-7890"
+			},
+			tags: ["Sports", "Community", "Health"]
+		},
+		{
+			id: 6,
+			name: "Foodie Festivals",
+			location: "New York, NY",
+			tag: "Food & Drink",
+			eventsCount: "30 Events",
+			rating: 4.9,
+			image: "/images/companyImages/FoodieFestivals.png",
+			featured: true,
+			bio: "Curating exceptional culinary experiences through food festivals, tasting events, and cooking workshops.",
+			socialMedia: {
+				twitter: "@foodiefests",
+				instagram: "foodiefestivals",
+				website: "www.foodiefestivals.com"
+			},
+			contact: {
+				email: "taste@foodiefestivals.com",
+				phone: "+1 (212) 555-3456"
+			},
+			tags: ["Food & Drink", "Culture", "Entertainment"]
+		},
+		{
+			id: 7,
+			name: "Art Collective",
+			location: "Los Angeles, CA",
+			tag: "Art",
+			eventsCount: "18 Events",
+			rating: 4.6,
+			image: "/images/companyImages/ArtCollective.png",
+			featured: false,
+			bio: "Supporting emerging artists through exhibitions, galleries, and interactive art experiences.",
+			socialMedia: {
+				twitter: "@artcollective",
+				instagram: "artcollectivela",
+				website: "www.artcollective.org"
+			},
+			contact: {
+				email: "create@artcollective.org",
+				phone: "+1 (323) 555-9012"
+			},
+			tags: ["Art", "Culture", "Entertainment"]
+		},
+		{
+			id: 8,
+			name: "Business Summit",
+			location: "London, UK",
+			tag: "Business",
+			eventsCount: "25 Events",
+			rating: 4.8,
+			image: "/images/companyImages/BusinessSummit.png",
+			featured: true,
+			bio: "Connecting industry leaders through professional conferences, networking events, and business workshops.",
+			socialMedia: {
+				twitter: "@bizsummit",
+				linkedin: "businesssummit",
+				website: "www.businesssummit.co.uk"
+			},
+			contact: {
+				email: "contact@businesssummit.co.uk",
+				phone: "+44 20 7123 4567"
+			},
+			tags: ["Business", "Professional", "Networking"]
+		},
+		{
+			id: 9,
+			name: "Green Events",
+			location: "San Francisco, CA",
+			tag: "Environment",
+			eventsCount: "22 Events",
+			rating: 4.7,
+			image: "/images/companyImages/GreenEvents.png",
+			featured: false,
+			bio: "Promoting sustainability through eco-friendly events, environmental workshops, and green technology showcases.",
+			socialMedia: {
+				twitter: "@greenevents",
+				instagram: "greeneventssf",
+				website: "www.greenevents.org"
+			},
+			contact: {
+				email: "sustainable@greenevents.org",
+				phone: "+1 (415) 555-6789"
+			},
+			tags: ["Environment", "Technology", "Education"]
 		}
 	];
 
@@ -252,15 +358,22 @@
 
 		<!-- Tags Dropdown -->
 		<div class="dropdown-container">
-			<AppFilterTags
-				bind:selectedTags
-				availableTags={tagOptions}
+			<AppFilterDropdown
+				bind:selectedValues={selectedTags}
+				options={tagOptions}
 				label="Tags"
+				icon={TagIcon}
 				isOpen={activeDropdown === 'tags'}
 				onToggle={() => handleDropdownToggle('tags')}
 			/>
 		</div>
 	</div>
+
+	<div class="flex items-center justify-between">
+    	<p class="text-sm text-muted-foreground">
+          Showing {paginatedOrganisers.length} of {filteredOrganisers.length} organisers
+        </p>
+    </div>
 
 	<!-- Organiser cards (including featured) -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
@@ -277,7 +390,6 @@
 			</div>
 		{/each}
 	</div>
-
 	<!-- No results message -->
 	{#if filteredOrganisers.length === 0}
 		<div class="text-center py-12">

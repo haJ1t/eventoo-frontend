@@ -7,26 +7,28 @@
   import * as AlertDialog from '$lib/components/ui/alert-dialog';
   import { Badge } from '$lib/components/ui/badge';
   import { Input } from '$lib/components/ui/input';
-  import { Plus, Search, Filter, Grid, List, MoreVertical } from 'lucide-svelte';
+  import { Plus, Search, Filter, Grid, List, MoreVertical, MapPin, Building, Tag } from 'lucide-svelte';
   import AppVenueCard from '$lib/components/app-venue-card.svelte';
-  import VenueFilters from '$lib/components/venue-filters.svelte';
+  import AppSearchBar from '$lib/components/app-search-bar.svelte';
+  import AppFilterDropdown from '$lib/components/app-filter-dropdown.svelte';
+  import AppFilterTags from '$lib/components/app-filter-tags.svelte';
+  import * as Pagination from '$lib/components/ui/pagination/index.js';
 
   // State
-  let filteredVenues: any[] = $state([]);
   let loading = $state(false);
-  let viewMode: 'grid' | 'list' = $state('grid');
-  let showFilters = $state(false);
-  let selectedVenue: any = $state(null);
+  let selectedVenue = $state(null);
   let showDeleteDialog = $state(false);
-
-  // Filters
-  let filters = $state({
-    search: '',
-    type: '',
-    status: '',
-    capacity: '',
-    location: ''
-  });
+  
+  // Search and filter state
+  let searchQuery = $state("");
+  let selectedTags = $state([]);
+  let selectedLocations = $state([]);
+  let selectedVenueTypes = $state([]);
+  let activeDropdown = $state(null);
+  
+  // Pagination state
+  let currentPage = $state(1);
+  let itemsPerPage = $state(3);
 
   // Test verileri
   let venues = $state([
@@ -37,7 +39,7 @@
       capacity: 500,
       image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&crop=center',
       type: 'Conference',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 3,
       description: 'Modern conference hall with state-of-the-art facilities',
       amenities: ['WiFi', 'Projector', 'Sound System', 'Parking'],
@@ -46,7 +48,8 @@
       images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 150,
       createdAt: '2024-01-15T10:00:00Z',
-      updatedAt: '2024-03-01T14:30:00Z'
+      updatedAt: '2024-03-01T14:30:00Z',
+      tags: ['Technology', 'Business', 'Professional']
     },
     {
       id: '2',
@@ -55,7 +58,7 @@
       capacity: 200,
       image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&h=400&fit=crop&crop=center',
       type: 'Wedding',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 1,
       description: 'Elegant event center perfect for weddings',
       amenities: ['Catering', 'Decoration', 'Dance Floor', 'Bar'],
@@ -64,7 +67,8 @@
       images: ['https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 120,
       createdAt: '2024-02-01T09:00:00Z',
-      updatedAt: '2024-03-15T11:20:00Z'
+      updatedAt: '2024-03-15T11:20:00Z',
+      tags: ['Wedding', 'Celebration', 'Elegant']
     },
     {
       id: '3',
@@ -73,7 +77,7 @@
       capacity: 150,
       image: 'https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center',
       type: 'Party',
-      status: 'inactive' as const,
+      status: 'inactive',
       upcomingEvents: 0,
       description: 'Beautiful outdoor garden venue',
       amenities: ['Garden', 'Outdoor Lighting', 'Gazebo'],
@@ -82,7 +86,8 @@
       images: ['https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 90,
       createdAt: '2024-02-15T11:00:00Z',
-      updatedAt: '2024-03-08T13:15:00Z'
+      updatedAt: '2024-03-08T13:15:00Z',
+      tags: ['Outdoor', 'Garden', 'Natural']
     },
     {
       id: '4',
@@ -91,7 +96,7 @@
       capacity: 300,
       image: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=400&fit=crop&crop=center',
       type: 'Wedding',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 5,
       description: 'Luxurious ballroom for premium events',
       amenities: ['Chandelier', 'VIP Area', 'Premium Catering', 'Valet Parking'],
@@ -100,7 +105,8 @@
       images: ['https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 250,
       createdAt: '2024-01-20T14:00:00Z',
-      updatedAt: '2024-03-10T16:45:00Z'
+      updatedAt: '2024-03-10T16:45:00Z',
+      tags: ['Luxury', 'Wedding', 'Premium']
     },
     {
       id: '5',
@@ -109,7 +115,7 @@
       capacity: 800,
       image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&crop=center',
       type: 'Conference',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 2,
       description: 'Large auditorium for tech conferences',
       amenities: ['High-Speed WiFi', 'Live Streaming', 'Recording Equipment', 'Green Room'],
@@ -118,7 +124,8 @@
       images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 180,
       createdAt: '2024-02-10T12:00:00Z',
-      updatedAt: '2024-03-05T09:30:00Z'
+      updatedAt: '2024-03-05T09:30:00Z',
+      tags: ['Technology', 'Conference', 'Modern']
     },
     {
       id: '6',
@@ -127,7 +134,7 @@
       capacity: 100,
       image: 'https://images.unsplash.com/photo-1551818255-e6e10975bc17?w=600&h=400&fit=crop&crop=center',
       type: 'Party',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 4,
       description: 'Stunning rooftop terrace with city views',
       amenities: ['City View', 'Bar', 'Lounge Area', 'Heaters'],
@@ -136,7 +143,8 @@
       images: ['https://images.unsplash.com/photo-1551818255-e6e10975bc17?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 160,
       createdAt: '2024-02-05T13:00:00Z',
-      updatedAt: '2024-03-18T15:30:00Z'
+      updatedAt: '2024-03-18T15:30:00Z',
+      tags: ['Rooftop', 'City View', 'Party']
     },
     {
       id: '7',
@@ -145,7 +153,7 @@
       capacity: 50,
       image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop&crop=center',
       type: 'Corporate',
-      status: 'active' as const,
+      status: 'active',
       upcomingEvents: 8,
       description: 'Professional meeting room for corporate events',
       amenities: ['WiFi', 'Whiteboard', 'Coffee Station', 'Parking'],
@@ -154,7 +162,8 @@
       images: ['https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 75,
       createdAt: '2024-01-25T08:00:00Z',
-      updatedAt: '2024-03-12T10:00:00Z'
+      updatedAt: '2024-03-12T10:00:00Z',
+      tags: ['Corporate', 'Business', 'Professional']
     },
     {
       id: '8',
@@ -163,7 +172,7 @@
       capacity: 250,
       image: 'https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center',
       type: 'Wedding',
-      status: 'inactive' as const,
+      status: 'inactive',
       upcomingEvents: 0,
       description: 'Beachfront wedding venue with ocean views',
       amenities: ['Ocean View', 'Beach Access', 'Outdoor Ceremony', 'Catering'],
@@ -172,46 +181,122 @@
       images: ['https://images.unsplash.com/photo-1519167758481-83f29c5c6ca0?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 200,
       createdAt: '2024-01-10T15:00:00Z',
-      updatedAt: '2024-02-28T12:00:00Z'
+      updatedAt: '2024-02-28T12:00:00Z',
+      tags: ['Beach', 'Wedding', 'Ocean View']
     }
   ]);
 
-  // Lifecycle
-  onMount(() => {
-    loadVenues();
+  // Filter options
+  const locationOptions = [
+    "Istanbul, Turkey",
+    "Ankara, Turkey", 
+    "Izmir, Turkey",
+    "Antalya, Turkey",
+    "Bursa, Turkey"
+  ];
+
+  const venueTypeOptions = [
+    "Conference",
+    "Wedding",
+    "Party",
+    "Corporate"
+  ];
+
+  const tagOptions = [
+    "Technology",
+    "Business", 
+    "Professional",
+    "Wedding",
+    "Celebration",
+    "Elegant",
+    "Outdoor",
+    "Garden",
+    "Natural",
+    "Luxury",
+    "Premium",
+    "Modern",
+    "Rooftop",
+    "City View",
+    "Party",
+    "Corporate",
+    "Beach",
+    "Ocean View"
+  ];
+
+  // Filter venues based on search query and selected filters
+  const filteredVenues = $derived(
+    venues.filter(venue => {
+      const matchesSearch = searchQuery === "" || 
+        venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        venue.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesTags = selectedTags.length === 0 ||
+        selectedTags.some(tag => venue.tags?.includes(tag));
+
+      const matchesLocation = selectedLocations.length === 0 ||
+        selectedLocations.some(loc => venue.location.includes(loc));
+        
+      const matchesType = selectedVenueTypes.length === 0 ||
+        selectedVenueTypes.some(type => venue.type === type);
+
+      return matchesSearch && matchesTags && matchesLocation && matchesType;
+    })
+  );
+
+  // Reset to page 1 when filters change
+  $effect(() => {
+    searchQuery;
+    selectedTags;
+    selectedLocations;
+    selectedVenueTypes;
+    
+    currentPage = 1;
   });
 
+  // Derived store for paginated venues
+  const paginatedVenues = $derived(
+    filteredVenues.slice(
+      (currentPage - 1) * itemsPerPage, 
+      currentPage * itemsPerPage
+    )
+  );
+
   // Functions
-  async function loadVenues() {
-    loading = true;
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      applyFilters();
-    } catch (error) {
-      console.error('Error loading venues:', error);
-    } finally {
-      loading = false;
+  function toggleTag(tag) {
+    if (selectedTags.includes(tag)) {
+      selectedTags = selectedTags.filter(t => t !== tag);
+    } else {
+      selectedTags = [...selectedTags, tag];
     }
   }
 
-  function applyFilters() {
-    filteredVenues = venues.filter(venue => {
-      if (filters.search && !venue.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-          !venue.description.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-      if (filters.type && venue.type !== filters.type) return false;
-      if (filters.status && venue.status !== filters.status) return false;
-      if (filters.location && !venue.location.toLowerCase().includes(filters.location.toLowerCase())) {
-        return false;
-      }
-      if (filters.capacity) {
-        const [min, max] = filters.capacity.split('-').map(Number);
-        if (max && (venue.capacity < min || venue.capacity > max)) return false;
-        if (!max && filters.capacity === '100+' && venue.capacity < 100) return false;
-      }
-      return true;
-    });
+  function clearAllTags() {
+    selectedTags = [];
+    activeDropdown = null;
+  }
+
+  function selectLocation(location) {
+    console.log("Selected location:", location);
+    activeDropdown = null;
+  }
+
+  function selectVenueType(type) {
+    console.log("Selected venue type:", type);
+    activeDropdown = null;
+  }
+
+  function handleDropdownToggle(dropdownName) {
+    activeDropdown = activeDropdown === dropdownName ? null : dropdownName;
+  }
+
+  function closeAllDropdowns() {
+    activeDropdown = null;
+  }
+
+  function handleClickOutside(event) {
+    if (!event.target.closest('.dropdown-container')) {
+      closeAllDropdowns();
+    }
   }
 
   // Event handlers
@@ -220,12 +305,7 @@
     goto('/venues/new');
   }
 
-  function handleCreateVenue() {
-    console.log('Creating new venue...');
-    handleAddVenue();
-  }
-
-  function handleDeleteVenue(venue: any) {
+  function handleDeleteVenue(venue) {
     console.log('Delete venue:', venue);
     selectedVenue = venue;
     showDeleteDialog = true;
@@ -239,7 +319,6 @@
       console.log('Deleting venue:', selectedVenue.name);
       await new Promise(resolve => setTimeout(resolve, 500));
       venues = venues.filter(v => v.id !== selectedVenue.id);
-      applyFilters();
       showDeleteDialog = false;
       selectedVenue = null;
       alert(`Venue "${selectedVenue?.name}" has been deleted successfully!`);
@@ -251,31 +330,17 @@
     }
   }
 
-  function handleToggleFilters() {
-    showFilters = !showFilters;
-    console.log('Toggling filters:', showFilters);
-  }
-
-  function handleViewModeChange(mode: 'grid' | 'list') {
+  function handleViewModeChange(mode) {
     viewMode = mode;
     console.log('View mode changed to:', mode);
   }
-
-  function handleClearFilters() {
-    console.log('Clearing all filters');
-    filters = { search: '', type: '', status: '', capacity: '', location: '' };
-    applyFilters();
-  }
-
-  // Reactive effect
-  $effect(() => {
-    applyFilters();
-  });
 </script>
 
 <svelte:head>
   <title>Venues - Evento</title>
 </svelte:head>
+
+<svelte:window on:click={handleClickOutside} />
 
 <div class="container mx-auto p-6 space-y-6">
   <!-- Header -->
@@ -333,63 +398,97 @@
     </Card>
   </div>
 
-  <!-- Filters and Search -->
-  <div class="flex gap-4">
-    <div class="flex-1">
-      <div class="relative">
-        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search venues..."
-          class="pl-10"
-          bind:value={filters.search}
-          oninput={() => applyFilters()}
-        />
+  <!-- Search and Filters -->
+  <div class="space-y-4">
+    
+    <!-- Search bar -->
+    <div class="relative">
+        <AppSearchBar
+        bind:value={searchQuery}
+        placeholder="Search venues..."
+        showIcon={true}
+      />
+    </div>
+    
+    <!-- Filter Controls -->
+    <div class="flex flex-wrap gap-4">
+      <!-- Location Filter -->
+      <AppFilterDropdown
+        bind:selectedValues={selectedLocations}
+        options={locationOptions}
+        label="Location"
+        icon={MapPin}
+        isOpen={activeDropdown === 'location'}
+        onToggle={() => handleDropdownToggle('location')}
+      />
+      
+      <!-- Venue Type Filter -->
+      <AppFilterDropdown
+        bind:selectedValues={selectedVenueTypes}
+        options={venueTypeOptions}
+        label="Venue Type"
+        icon={Building}
+        isOpen={activeDropdown === 'venueType'}
+        onToggle={() => handleDropdownToggle('venueType')}
+      />
+      
+      <!-- Tags Filter -->
+      <AppFilterDropdown
+        bind:selectedValues={selectedTags}
+        options={tagOptions}
+        icon={Tag}
+        label="Tags"
+        isOpen={activeDropdown === 'tags'}
+        onToggle={() => handleDropdownToggle('tags')}
+      />
+      
+      <!-- View Mode Toggle -->
+      <div class="flex border rounded-md">
+        <Button
+          variant={viewMode === 'grid' ? 'default' : 'ghost'}
+          size="sm"
+          class="rounded-r-none"
+          disabled={false}
+          onclick={() => handleViewModeChange('grid')}
+          type="button"
+        >
+          <Grid class="h-4 w-4" />
+        </Button>
+        <Button
+          variant={viewMode === 'list' ? 'default' : 'ghost'}
+          size="sm"
+          class="rounded-l-none"
+          disabled={false}
+          onclick={() => handleViewModeChange('list')}
+          type="button"
+        >
+          <List class="h-4 w-4" />
+        </Button>
       </div>
     </div>
-    <Button 
-      variant="outline" 
-      class=""
-      disabled={false}
-      onclick={handleToggleFilters}
-      type="button"
-    >
-      <Filter class="h-4 w-4 mr-2" />
-      Filters
-      {#if showFilters}
-        <span class="ml-1 text-xs">(Open)</span>
-      {/if}
-    </Button>
-    <div class="flex border rounded-md">
-      <Button
-        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-        size="sm"
-        class="rounded-r-none"
-        disabled={false}
-        onclick={() => handleViewModeChange('grid')}
-        type="button"
-      >
-        <Grid class="h-4 w-4" />
-      </Button>
-      <Button
-        variant={viewMode === 'list' ? 'default' : 'ghost'}
-        size="sm"
-        class="rounded-l-none"
-        disabled={false}
-        onclick={() => handleViewModeChange('list')}
-        type="button"
-      >
-        <List class="h-4 w-4" />
-      </Button>
-    </div>
+    
+    <!-- Remove this entire section:
+    {#if selectedTags.length > 0 || selectedLocations.length > 0 || selectedVenueTypes.length > 0}
+      <AppFilterTags 
+        {selectedTags}
+        selectedLocations={selectedLocations}
+        selectedVenueTypes={selectedVenueTypes}
+        onRemoveTag={toggleTag}
+        onRemoveLocation={(location) => {
+          selectedLocations = selectedLocations.filter(loc => loc !== location);
+        }}
+        onRemoveVenueType={(type) => {
+          selectedVenueTypes = selectedVenueTypes.filter(t => t !== type);
+        }}
+        onClearAll={() => {
+          selectedTags = [];
+          selectedLocations = [];
+          selectedVenueTypes = [];
+        }}
+      />
+    {/if}
+    -->
   </div>
-
-  <!-- Filters Panel -->
-  {#if showFilters}
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-      <VenueFilters bind:filters />
-    </div>
-  {/if}
 
   <!-- Loading State -->
   {#if loading}
@@ -402,20 +501,8 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <p class="text-sm text-muted-foreground">
-          Showing {filteredVenues.length} of {venues.length} venues
+          Showing {paginatedVenues.length} of {filteredVenues.length} venues
         </p>
-        {#if Object.values(filters).some(v => v !== '')}
-          <Button
-            variant="secondary" 
-            size="sm"
-            class=""
-            disabled={false}
-            onclick={handleClearFilters}
-            type="button"
-          >
-            Clear filters
-          </Button>
-        {/if}
       </div>
 
       {#if filteredVenues.length === 0}
@@ -438,20 +525,51 @@
         </Card>
       {:else if viewMode === 'grid'}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {#each filteredVenues as venue (venue.id)}
-            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
+          {#each paginatedVenues as venue (venue.id)}
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
       {:else}
         <div class="space-y-4">
-          {#each filteredVenues as venue (venue.id)}
-            <!-- DÜZELTİLDİ: on:delete event'ini doğru şekilde kullan -->
+          {#each paginatedVenues as venue (venue.id)}
             <AppVenueCard {venue} on:delete={() => handleDeleteVenue(venue)} />
           {/each}
         </div>
       {/if}
     </div>
+    
+    <!-- Pagination -->
+    {#if filteredVenues.length > itemsPerPage}
+      <Pagination.Root 
+        count={filteredVenues.length} 
+        perPage={itemsPerPage}
+        bind:page={currentPage}
+      >
+        {#snippet children({ pages, currentPage: paginationCurrentPage })}
+          <Pagination.Content>
+            <Pagination.Item>
+              <Pagination.PrevButton />
+            </Pagination.Item>
+            {#each pages as page (page.key)}
+              {#if page.type === "ellipsis"}
+                <Pagination.Item class="bg-primary text-white">
+                  <Pagination.Ellipsis />
+                </Pagination.Item>
+              {:else}
+                <Pagination.Item>
+                  <Pagination.Link {page} isActive={paginationCurrentPage === page.value}>
+                    {page.value}
+                  </Pagination.Link>
+                </Pagination.Item>
+              {/if}
+            {/each}
+            <Pagination.Item>
+              <Pagination.NextButton />
+            </Pagination.Item>
+          </Pagination.Content>
+        {/snippet}
+      </Pagination.Root>
+    {/if}
   {/if}
 </div>
 

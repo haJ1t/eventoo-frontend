@@ -72,23 +72,7 @@
         <span class="transform transition-transform {isOpen ? 'rotate-180' : ''}">⌄</span>
     </Button>
 
-    <!-- Selected Values Display -->
-    {#if selectedValues.length > 0}
-        <div class="flex flex-wrap gap-1 mt-2">
-            {#each selectedValues as value}
-                <Badge variant="secondary" class="flex items-center gap-1 text-xs">
-                    {value}
-                    <button
-                        onclick={() => removeValue(value)}
-                        class="ml-1 h-3 w-3 rounded-full hover:bg-gray-300 flex items-center justify-center"
-                        type="button"
-                    >
-                        <X class="h-2 w-2" />
-                    </button>
-                </Badge>
-            {/each}
-        </div>
-    {/if}
+    <!-- Selected Values Display section removed -->
 
     {#if isOpen}
         <div class="absolute z-10 mt-2 w-64 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">

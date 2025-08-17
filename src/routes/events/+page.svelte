@@ -3,7 +3,8 @@
 	import AppEventDetailsModal from "$lib/components/app-event-details-modal.svelte";
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
-	import AppFilterTags from "$lib/components/app-filter-tags.svelte";
+	// Remove this import:
+	// import AppFilterTags from "$lib/components/app-filter-tags.svelte";
 	import * as Pagination from "$lib/components/ui/pagination/index.js";
 	import { MapPin, User, User2, Tag } from "@lucide/svelte";
 	import { Button } from "$lib/components/ui/button";
@@ -11,6 +12,7 @@
 	// Import Svelte's transition and animation functions
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
+    import { TagIcon } from "lucide-svelte";
 
 	let searchQuery = $state("");
 	let showModal = $state(false);
@@ -294,7 +296,6 @@
 
 	<!-- Search bar -->
 	<div class="relative">
-		<!-- Search bar -->
 			<AppSearchBar
 			bind:value={searchQuery}
 			placeholder="Search organisers by name or location"
@@ -326,20 +327,26 @@
 				isOpen={activeDropdown === 'size'}
 				onToggle={() => handleDropdownToggle('size')}
 			/>
-			
 		</div>
 
 		<!-- Tags Dropdown -->
 		<div class="dropdown-container">
-			<AppFilterTags
-				bind:selectedTags
-				availableTags={tagOptions}
+			<AppFilterDropdown
+				bind:selectedValues={selectedTags}
+				options={tagOptions}
 				label="Tags"
+				icon={TagIcon}
 				isOpen={activeDropdown === 'tags'}
 				onToggle={() => handleDropdownToggle('tags')}
 			/>
 		</div>
 	</div>
+
+	<div class="flex items-center justify-between">
+        <p class="text-sm text-muted-foreground">
+          Showing {paginatedEvents.length} of {filteredEvents.length} events
+        </p>
+    </div>
 
 	<!-- Event cards -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
