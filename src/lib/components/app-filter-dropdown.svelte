@@ -63,7 +63,12 @@
         class="flex items-center gap-2"
     >
         {#if icon}
-            <svelte:component this={icon} class="h-4 w-4" />
+            {#if typeof icon === 'function'}
+                {@const Icon = icon}
+                <Icon class="h-4 w-4" />
+            {:else}
+                <icon class="h-4 w-4"></icon>
+            {/if}
         {/if}
         {label}
         {#if selectedValues.length > 0}
@@ -75,7 +80,7 @@
     <!-- Selected Values Display section removed -->
 
     {#if isOpen}
-        <div class="absolute z-10 mt-2 w-64 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+        <div class="absolute z-10 mt-2 w-64 rounded-md bg-white shadow-lg border border-gray-200">
             <div class="p-2 space-y-1">
                 {#each options as option}
                     <button

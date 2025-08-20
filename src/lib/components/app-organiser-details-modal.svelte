@@ -65,7 +65,7 @@
 </script>
 
 <Dialog bind:open>
-	<DialogContent class="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+	<DialogContent portalProps={{}} class="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
 		{#if organiser}
 			<!-- Organiser Header/Banner -->
 			<div class="relative">
@@ -77,7 +77,7 @@
 				
 				{#if organiser.featured}
 					<div class="absolute top-4 left-4">
-						<Badge 
+						<Badge href="#"
 							variant="secondary"
 							class="bg-amber-100 text-amber-800 border-amber-300"
 						>
@@ -92,7 +92,7 @@
 				<!-- Header -->
 				<DialogHeader class="space-y-2">
 					<div class="flex items-center gap-2">
-						<Badge variant="outline" class="text-xs">
+						<Badge href="#" variant="outline" class="text-xs">
 							{organiser.category}
 						</Badge>
 						<div class="flex items-center text-amber-600 text-sm">
@@ -142,7 +142,7 @@
 						<div class="flex flex-wrap gap-3">
 							{#each Object.entries(organiser.socialMedia) as [platform, handle]}
 								<a 
-									href="#" 
+									href={`https://${platform}.com/${handle}`} 
 									class="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
 								>
 									<svelte:component this={getSocialIcon(platform)} class="w-4 h-4" />
@@ -153,7 +153,7 @@
 					</div>
 				</div>
 
-				<Separator />
+				<Separator class="my-6" />
 
 				<!-- Upcoming Events -->
 				<div class="space-y-4">
@@ -165,7 +165,7 @@
 					</div>
 				</div>
 
-				<Separator />
+				<Separator class="my-6" />
 
 				<!-- Testimonials -->
 				<div class="space-y-4">
@@ -194,10 +194,10 @@
 
 				<!-- Action Buttons -->
 				<div class="flex gap-3 pt-4 border-t">
-					<Button class="flex-1">
+					<Button href="#" class="flex-1" disabled={false}>
 						Contact Organiser
 					</Button>
-					<Button variant="outline" class="flex-1">
+					<Button href="#" variant="outline" class="flex-1" disabled={false}>
 						Share Profile
 					</Button>
 				</div>

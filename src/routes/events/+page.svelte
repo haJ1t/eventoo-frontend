@@ -25,7 +25,7 @@
 
 	// Pagination state variables
     let currentPage = $state(1);
-    let itemsPerPage = $state(4);
+    let itemsPerPage = $state(6);
 
 	const events = [
 		{

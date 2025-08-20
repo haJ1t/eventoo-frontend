@@ -24,7 +24,7 @@
               <Sidebar.GroupContent class="">
                 <Sidebar.Menu class="">
                   <Sidebar.MenuItem class="">
-                    <Sidebar.MenuButton>
+                    <Sidebar.MenuButton asChild>
                       <a href="/home" class="flex items-center gap-x-3 text-[15px] py-2 pl-5">
                         <Home class="h-5 w-5" />
                         <span>Home</span>

@@ -22,7 +22,7 @@
 </script>
 
 <Dialog bind:open>
-	<DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+	<DialogContent portalProps={{}} class="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
 		{#if eventDetails}
 			<!-- Event Image -->
 			<div class="relative">
@@ -34,7 +34,7 @@
 				
 				<!-- Status Badge -->
 				<div class="absolute top-4 left-4">
-					<Badge 
+					<Badge href="#"
 						variant={eventDetails.status === 'Scheduled' ? 'default' : 'secondary'}
 						class="text-sm"
 					>
@@ -48,7 +48,7 @@
 				<!-- Header -->
 				<DialogHeader class="space-y-2">
 					<div class="flex items-center gap-2">
-						<Badge variant="outline" class="text-xs">
+						<Badge variant="outline" class="text-xs" href="#">
 							{eventDetails.category}
 						</Badge>
 					</div>
@@ -113,7 +113,7 @@
 					<h3 class="text-lg font-semibold">Tags</h3>
 					<div class="flex flex-wrap gap-2">
 						{#each eventDetails.tags as tag}
-							<Badge variant="secondary" class="text-xs">
+							<Badge href="#" variant="secondary" class="text-xs">
 								{tag}
 							</Badge>
 						{/each}
@@ -122,10 +122,10 @@
 
 				<!-- Action Buttons -->
 				<div class="flex gap-3 pt-4 border-t">
-					<Button class="flex-1">
+					<Button href="#" class="flex-1" disabled={false}>
 						Register Now
 					</Button>
-					<Button variant="outline" class="flex-1">
+					<Button href="#" variant="outline" class="flex-1" disabled={false}>
 						Share Event
 					</Button>
 				</div>
