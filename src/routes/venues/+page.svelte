@@ -49,10 +49,10 @@
       images: ['https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 150,
       availability: {
-        monday: { start: '09:00', end: '20:00', available: true },
+        monday: { start: '09:00', end: '20:00', available: false },
         tuesday: { start: '09:00', end: '20:00', available: true },
         wednesday: { start: '09:00', end: '20:00', available: true },
-        thursday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: false },
         friday: { start: '09:00', end: '20:00', available: true },
         saturday: { start: '09:00', end: '20:00', available: true },
         sunday: { start: '09:00', end: '20:00', available: true },
@@ -80,10 +80,10 @@
         monday: { start: '09:00', end: '20:00', available: true },
         tuesday: { start: '09:00', end: '20:00', available: true },
         wednesday: { start: '09:00', end: '20:00', available: true },
-        thursday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: false },
         friday: { start: '09:00', end: '20:00', available: true },
         saturday: { start: '09:00', end: '20:00', available: true },
-        sunday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: false },
       },
       createdAt: '2024-02-01T09:00:00Z',
       updatedAt: '2024-03-15T11:20:00Z',
@@ -106,12 +106,12 @@
       pricePerHour: 90,
       availability: {
         monday: { start: '09:00', end: '20:00', available: true },
-        tuesday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: false },
         wednesday: { start: '09:00', end: '20:00', available: true },
         thursday: { start: '09:00', end: '20:00', available: true },
-        friday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: false },
         saturday: { start: '09:00', end: '20:00', available: true },
-        sunday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: false },
       },
       createdAt: '2024-02-15T11:00:00Z',
       updatedAt: '2024-03-08T13:15:00Z',
@@ -133,13 +133,13 @@
       images: ['https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 250,
       availability: {
-        monday: { start: '09:00', end: '20:00', available: true },
-        tuesday: { start: '09:00', end: '20:00', available: true },
+        monday: { start: '09:00', end: '20:00', available: false },
+        tuesday: { start: '09:00', end: '20:00', available: false },
         wednesday: { start: '09:00', end: '20:00', available: true },
         thursday: { start: '09:00', end: '20:00', available: true },
-        friday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: false },
         saturday: { start: '09:00', end: '20:00', available: true },
-        sunday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: false },
       },
       createdAt: '2024-01-20T14:00:00Z',
       updatedAt: '2024-03-10T16:45:00Z',
@@ -161,13 +161,13 @@
       images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&crop=center'],
       pricePerHour: 180,
       availability: {
-        monday: { start: '09:00', end: '20:00', available: true },
-        tuesday: { start: '09:00', end: '20:00', available: true },
+        monday: { start: '09:00', end: '20:00', available: false },
+        tuesday: { start: '09:00', end: '20:00', available: false },
         wednesday: { start: '09:00', end: '20:00', available: true },
         thursday: { start: '09:00', end: '20:00', available: true },
-        friday: { start: '09:00', end: '20:00', available: true },
+        friday: { start: '09:00', end: '20:00', available: false },
         saturday: { start: '09:00', end: '20:00', available: true },
-        sunday: { start: '09:00', end: '20:00', available: true },
+        sunday: { start: '09:00', end: '20:00', available: false },
       },
       createdAt: '2024-02-10T12:00:00Z',
       updatedAt: '2024-03-05T09:30:00Z',
@@ -218,9 +218,9 @@
       pricePerHour: 75,
       availability: {
         monday: { start: '09:00', end: '20:00', available: true },
-        tuesday: { start: '09:00', end: '20:00', available: true },
+        tuesday: { start: '09:00', end: '20:00', available: false },
         wednesday: { start: '09:00', end: '20:00', available: true },
-        thursday: { start: '09:00', end: '20:00', available: true },
+        thursday: { start: '09:00', end: '20:00', available: false },
         friday: { start: '09:00', end: '20:00', available: true },
         saturday: { start: '09:00', end: '20:00', available: true },
         sunday: { start: '09:00', end: '20:00', available: true },
@@ -247,10 +247,10 @@
       availability: {
         monday: { start: '09:00', end: '20:00', available: true },
         tuesday: { start: '09:00', end: '20:00', available: true },
-        wednesday: { start: '09:00', end: '20:00', available: true },
-        thursday: { start: '09:00', end: '20:00', available: true },
+        wednesday: { start: '09:00', end: '20:00', available: false },
+        thursday: { start: '09:00', end: '20:00', available: false },
         friday: { start: '09:00', end: '20:00', available: true },
-        saturday: { start: '09:00', end: '20:00', available: true },
+        saturday: { start: '09:00', end: '20:00', available: false },
         sunday: { start: '09:00', end: '20:00', available: true },
       },
       createdAt: '2024-01-10T15:00:00Z',
@@ -259,42 +259,39 @@
     }
   ]);
 
-  // Filter options
-  const locationOptions = [
-    "Istanbul, Turkey",
-    "Ankara, Turkey", 
-    "Izmir, Turkey",
-    "Antalya, Turkey",
-    "Bursa, Turkey"
-  ];
+  // Configuration variables for number of options to show
+  const maxTagsToShow = 6;
+  const maxLocationsToShow = 6;
+  const maxVenueTypesToShow = 5;
 
-  const venueTypeOptions = [
-    "Conference",
-    "Wedding",
-    "Party",
-    "Corporate"
-  ];
+  // Function to calculate most popular options based on frequency
+  function getMostPopularOptions(data, field, maxCount = 6) {
+    const frequency = {};
+    
+    // Count frequency of each option
+    data.forEach(item => {
+      if (field === 'tags' && item.tags && Array.isArray(item.tags)) {
+        item.tags.forEach(tag => {
+          frequency[tag] = (frequency[tag] || 0) + 1;
+        });
+      } else if (field === 'location' && item.location) {
+        frequency[item.location] = (frequency[item.location] || 0) + 1;
+      } else if (field === 'type' && item.type) {
+        frequency[item.type] = (frequency[item.type] || 0) + 1;
+      }
+    });
+    
+    // Sort by frequency and return top X
+    return Object.entries(frequency)
+			.sort(([,a], [,b]) => Number(b) - Number(a))
+      .slice(0, maxCount)
+      .map(([option]) => option);
+  }
 
-  const tagOptions = [
-    "Technology",
-    "Business", 
-    "Professional",
-    "Wedding",
-    "Celebration",
-    "Elegant",
-    "Outdoor",
-    "Garden",
-    "Natural",
-    "Luxury",
-    "Premium",
-    "Modern",
-    "Rooftop",
-    "City View",
-    "Party",
-    "Corporate",
-    "Beach",
-    "Ocean View"
-  ];
+  // Replace static options with dynamic popular options
+  const locationOptions = getMostPopularOptions(venues, 'location', maxLocationsToShow);
+  const venueTypeOptions = getMostPopularOptions(venues, 'type', maxVenueTypesToShow);
+  const tagOptions = getMostPopularOptions(venues, 'tags', maxTagsToShow);
 
   // Filter venues based on search query and selected filters
   const filteredVenues = $derived(

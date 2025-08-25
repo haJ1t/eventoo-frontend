@@ -20,7 +20,7 @@
 	
 	// Pagination state variables
     let currentPage = $state(1);
-    let itemsPerPage = $state(4);
+    let itemsPerPage = $state(6);
 
 	// Add state to track which dropdown is currently open
 	let activeDropdown = $state(null); // 'location' | 'tags' | null
@@ -218,29 +218,6 @@
 		}
 	];
 
-	// Location options
-	const locationOptions = [
-		"San Francisco, CA",
-		"Austin, TX",
-		"New York, NY",
-		"Chicago, IL",
-		"Los Angeles, CA",
-		"London, UK",
-		"Istanbul, Turkey"
-	];
-
-	// tag options
-	const tagOptions = [
-		"Technology",
-		"Music",
-		"Art",
-		"Food & Drink",
-		"Sports",
-		"Business",
-		"Education",
-		"Entertainment"
-	];
-
 	// Get all unique tags
 	//const allTags = $derived([...new Set(organisers.flatMap(organiser => organiser.tags || []))]);
 
@@ -320,6 +297,36 @@
 	function closeAllDropdowns() {
 		activeDropdown = null;
 	}
+
+	// Configuration variables for number of options to show
+	const maxTagsToShow = 6;
+	const maxLocationsToShow = 6;
+
+	// Function to calculate most popular options based on frequency
+	function getMostPopularOptions(data, field, maxCount = 6) {
+		const frequency = {};
+		
+		// Count frequency of each option
+		data.forEach(item => {
+			if (field === 'tags' && item.tags && Array.isArray(item.tags)) {
+				item.tags.forEach(tag => {
+					frequency[tag] = (frequency[tag] || 0) + 1;
+				});
+			} else if (field === 'location' && item.location) {
+				frequency[item.location] = (frequency[item.location] || 0) + 1;
+			}
+		});
+		
+		// Sort by frequency and return top X
+		return Object.entries(frequency)
+			.sort(([,a], [,b]) => Number(b) - Number(a))
+			.slice(0, maxCount)
+			.map(([option]) => option);
+	}
+
+	// Replace static options with dynamic popular options
+	const locationOptions = getMostPopularOptions(organisers, 'location', maxLocationsToShow);
+	const tagOptions = getMostPopularOptions(organisers, 'tags', maxTagsToShow);
 
 	// Modified click outside handler
 	function handleClickOutside(event) {

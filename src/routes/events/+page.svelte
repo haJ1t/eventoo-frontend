@@ -150,36 +150,7 @@
 		}
 	];
 
-	// Dropdown options
-		const locationOptions = [
-		"San Francisco, CA",
-		"Austin, TX",
-		"New York, NY",
-		"Los Angeles, CA",
-		"London, UK",
-		"Istanbul, Turkey"
-	];
-
-	const eventSizeOptions = [
-		"Small (0-100)",
-		"Medium (101-1000)", 
-		"Large (1000+)",
-		"Mega (5000+)"
-	];
-
-	// tag options
-	const tagOptions = [
-		"Technology",
-		"Music",
-		"Art",
-		"Food & Drink",
-		"Religious",
-		"Cultural",
-		"Networking",
-		"Festival",
-		"Exhibition"
-	];
-
+	
 	// Get all unique tags
 	//const allTags = $derived([...new Set(events.flatMap(event => event.tags || []))]);
 
@@ -263,6 +234,46 @@
 		}
 	}
 
+	// Configuration variables for number of options to show
+	const maxTagsToShow = 6;
+	const maxLocationsToShow = 6;
+	const maxEventSizesToShow = 4;
+
+	// Function to calculate most popular options based on frequency
+	function getMostPopularOptions(data, field, maxCount = 6) {
+		const frequency = {};
+		
+		// Count frequency of each option
+		data.forEach(item => {
+			if (field === 'tags' && item.tags && Array.isArray(item.tags)) {
+				item.tags.forEach(tag => {
+					frequency[tag] = (frequency[tag] || 0) + 1;
+				});
+			} else if (field === 'location' && item.location) {
+				frequency[item.location] = (frequency[item.location] || 0) + 1;
+			} else if (field === 'size' && item.size) {
+				frequency[item.size] = (frequency[item.size] || 0) + 1;
+			}
+		});
+		
+		// Sort by frequency and return top X
+		return Object.entries(frequency)
+			.sort(([,a], [,b]) => Number(b) - Number(a))
+			.slice(0, maxCount)
+			.map(([option]) => option);
+	}
+
+	// Replace static options with dynamic popular options
+	// Get ALL unique options from the data (not limited)
+	const allTagOptions = $derived([...new Set(events.flatMap(event => event.tags || []))]);
+	const allLocationOptions = $derived([...new Set(events.map(event => event.location))]);
+	const allEventSizeOptions = $derived([...new Set(events.map(event => event.size))]);
+	
+	// Keep the limited popular options for display
+	const locationOptions = getMostPopularOptions(events, 'location', maxLocationsToShow);
+	const eventSizeOptions = getMostPopularOptions(events, 'size', maxEventSizesToShow);
+	const tagOptions = getMostPopularOptions(events, 'tags', maxTagsToShow);
+
 	// Close all dropdowns
 	function closeAllDropdowns() {
 		activeDropdown = null;
@@ -310,6 +321,7 @@
 			<AppFilterDropdown
 				bind:selectedValues={selectedLocations}
 				options={locationOptions}
+				allOptions={allLocationOptions}
 				label="Location"
 				icon={MapPin}
 				isOpen={activeDropdown === 'location'}
@@ -322,6 +334,7 @@
 			<AppFilterDropdown
             	bind:selectedValues={selectedEventSizes}
 				options={eventSizeOptions}
+				allOptions={allEventSizeOptions}
 				label="Event Size"
 				icon={User2}
 				isOpen={activeDropdown === 'size'}
@@ -334,6 +347,7 @@
 			<AppFilterDropdown
 				bind:selectedValues={selectedTags}
 				options={tagOptions}
+				allOptions={allTagOptions}
 				label="Tags"
 				icon={TagIcon}
 				isOpen={activeDropdown === 'tags'}
