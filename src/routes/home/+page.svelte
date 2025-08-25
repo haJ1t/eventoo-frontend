@@ -1,341 +1,400 @@
 <script>
-    /* UI components */
-    import { Button } from '$lib/components/ui/button';
-    import { Card, CardHeader, CardTitle, CardContent } from '$lib/components/ui/card';
-    import { Badge } from '$lib/components/ui/badge';
-    /* Icons */
-    import { Calendar as CalendarIcon, Clock, MapPin, Star, ChevronLeft, ChevronRight } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { tweened } from 'svelte/motion';
+  import { cubicOut } from 'svelte/easing';
+  import { fade, fly, scale } from 'svelte/transition';
   
-    /* -------- Your events (same names/images; DATES UPDATED to 2025) -------- */
-    const events = [
-      {
-        id: 1,
-        title: "Tech Conference 2024",
-        date: "August 11, 2025",   // TODAY (so “Today” filter shows something)
-        location: "Grand Ballroom",
-        attendees: "500 Attendees",
-        status: "Scheduled",
-        image: "/images/eventImages/tech.jpg",
-        description: "Join us for the biggest tech conference of the year featuring industry leaders, innovative workshops, and networking opportunities.",
-        organizer: "Tech Events Inc.",
-        price: "$299",
-        category: "Technology",
-        tags: ["Technology", "Conference", "Networking"]
-      },
-      {
-        id: 2,
-        title: "Summer Music Festival",
-        date: "August 20, 2025",   // within next 7 days (from Aug 11, 2025)
-        location: "Central Park",
-        attendees: "10000 Attendees",
-        status: "Scheduled",
-        image: "/images/eventImages/music.jpeg",
-        description: "Three days of amazing music, food, and entertainment in the heart of the city.",
-        organizer: "Music Events Co.",
-        price: "$199",
-        category: "Music",
-        tags: ["Music", "Festival", "Outdoor"]
-      },
-      {
-        id: 3,
-        title: "Art Exhibition",
-        date: "September 5, 2025",
-        location: "City Art Gallery",
-        attendees: "200 Attendees",
-        status: "Scheduled",
-        image: "/images/eventImages/art.jpg",
-        description: "A stunning collection of contemporary art from local and international artists.",
-        organizer: "Art Gallery Network",
-        price: "$99",
-        category: "Art",
-        tags: ["Art", "Exhibition", "Culture"]
-      },
-      {
-        id: 4,
-        title: "Ramadan Iftar Gathering",
-        date: "October 10, 2025",
-        location: "Community Center",
-        attendees: "150 Attendees",
-        status: "Scheduled",
-        image: "/images/eventImages/Iftar.jpg",
-        description: "Join us for a community iftar to break fast together during the holy month of Ramadan. Enjoy traditional foods and meaningful conversation.",
-        organizer: "Sohbet Society",
-        price: "Free",
-        category: "Cultural",
-        tags: ["Cultural", "Community", "Religious"]
-      }
-    ];
+  import { 
+    Calendar, Users, DollarSign, TrendingUp, 
+    BarChart3, Clock, Ticket, Camera, Plus,
+    Eye, Star, Settings, Target, ChevronLeft, ChevronRight
+  } from 'lucide-svelte';
   
-    /* -------- Helpers (simple, use real today) -------- */
-    const toDate = (s) => new Date(s);
-    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const isSameDay = (a, b) => startOfDay(a).getTime() === startOfDay(b).getTime();
+  // Animasyonlu sayılar
+  const eventCount = tweened(0, { 
+    duration: 1000, 
+    easing: cubicOut 
+  });
   
-    const today = new Date();
+  const participantCount = tweened(0, { 
+    duration: 1200, 
+    easing: cubicOut 
+  });
   
-    const inNext7Days = (d) => {
-      const sd = startOfDay(d).getTime();
-      const t0 = startOfDay(today).getTime();
-      const t7 = t0 + 7 * 86400000;
-      return sd >= t0 && sd <= t7;
-    };
-    const inThisMonth = (d) =>
-      d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+  const revenueCount = tweened(0, { 
+    duration: 1400, 
+    easing: cubicOut 
+  });
   
-    /* Calendar utils */
-    function monthMeta(year, monthIndex) {
-      const first = new Date(year, monthIndex, 1);
-      const last = new Date(year, monthIndex + 1, 0);
-      const startWeekday = first.getDay(); // 0 Sun … 6 Sat
-      const days = last.getDate();
-      return { startWeekday, days };
+  const growthCount = tweened(0, { 
+    duration: 1600, 
+    easing: cubicOut 
+  });
+  
+  // Sayfa yükleme animasyonu için
+  let isLoaded = false;
+  
+  // Component mount olduğunda animasyonları başlat
+  onMount(() => {
+    setTimeout(() => {
+      isLoaded = true;
+      eventCount.set(24);
+      participantCount.set(1250);
+      revenueCount.set(45000);
+      growthCount.set(12.5);
+    }, 300);
+  });
+  
+  // Dashboard verileri
+  let upcomingEvents = [
+    { id: 1, name: "Tech Conference 2024", date: "2024-09-15", participants: 250, status: "confirmed" },
+    { id: 2, name: "Music Festival", date: "2024-09-22", participants: 500, status: "planning" },
+    { id: 3, name: "Art Exhibition", date: "2024-09-30", participants: 150, status: "confirmed" }
+  ];
+  
+  let recentActivities = [
+    { action: "New event created", time: "2 mins ago", user: "John Doe" },
+    { action: "Event updated", time: "5 mins ago", user: "Jane Smith" },
+    { action: "Participant registered", time: "10 mins ago", user: "Mike Johnson" }
+  ];
+
+  // Calendar için
+  let currentDate = new Date();
+  let currentMonth = currentDate.getMonth();
+  let currentYear = currentDate.getFullYear();
+  
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  // Calendar events
+  let calendarEvents = {
+    15: { title: "Tech Conference", type: "conference" },
+    22: { title: "Music Festival", type: "festival" },
+    30: { title: "Art Exhibition", type: "exhibition" }
+  };
+  
+  function getDaysInMonth(month, year) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+  
+  function getFirstDayOfMonth(month, year) {
+    return new Date(year, month, 1).getDay();
+  }
+  
+  function previousMonth() {
+    if (currentMonth === 0) {
+      currentMonth = 11;
+      currentYear--;
+    } else {
+      currentMonth--;
     }
+  }
   
-    /* -------- UI State -------- */
-    let filter = 'all'; // 'today' | 'next7' | 'month' | 'all' | 'day'
-    let selectedDay = null; // Date | null
-  
-    // Start calendar on the current month
-    let calYear = today.getFullYear();
-    let calMonth = today.getMonth(); // 0..11
-  
-    const filters = [
-      { key: 'today', label: 'Today' },
-      { key: 'next7', label: 'Next 7 days' },
-      { key: 'month', label: 'This month' },
-      { key: 'all', label: 'All' }
-    ];
-  
-    function setFilter(key) {
-      filter = key;
-      selectedDay = null;
-      if (key === 'month') {
-        calYear = today.getFullYear();
-        calMonth = today.getMonth();
-      }
+  function nextMonth() {
+    if (currentMonth === 11) {
+      currentMonth = 0;
+      currentYear++;
+    } else {
+      currentMonth++;
     }
+  }
   
-    function prevMonth() {
-      if (calMonth === 0) { calMonth = 11; calYear -= 1; }
-      else calMonth -= 1;
-    }
-    function nextMonth() {
-      if (calMonth === 11) { calMonth = 0; calYear += 1; }
-      else calMonth += 1;
-    }
-  
-    /* -------- Derived (Svelte 4-friendly) -------- */
-    $: calMeta = monthMeta(calYear, calMonth);
-    $: calLeading = Array(calMeta.startWeekday).fill(0);
-    $: calDayNumbers = Array.from({ length: calMeta.days }, (_, i) => i + 1);
-  
-    function eventsFiltered() {
-      let list = events.map(e => ({ ...e, _date: toDate(e.date) }));
-      switch (filter) {
-        case 'today':
-          list = list.filter(e => isSameDay(e._date, today));
-          break;
-        case 'next7':
-          list = list.filter(e => inNext7Days(e._date));
-          break;
-        case 'month':
-          list = list.filter(e => inThisMonth(e._date));
-          break;
-        case 'day':
-          list = selectedDay ? list.filter(e => isSameDay(e._date, selectedDay)) : [];
-          break;
-        default:
-          // 'all' → no extra filtering
-          break;
-      }
-      // Keep order by date ascending
-      return list.sort((a, b) => a._date - b._date);
-    }
-  
-    function eventsOnDay(y, m, dayNum) {
-      return events.filter(e => {
-        const d = toDate(e.date);
-        return d.getFullYear() === y && d.getMonth() === m && d.getDate() === dayNum;
-      });
-    }
-    function selectCalendarDay(dayNum) {
-      selectedDay = new Date(calYear, calMonth, dayNum);
-      filter = 'day';
-    }
-  
-    // Featured: nearest upcoming (>= today), else earliest by date
-    function pickFeatured() {
-      const withD = events.map(e => ({ ...e, _date: toDate(e.date) }));
-      const upcoming = withD
-        .filter(e => startOfDay(e._date).getTime() >= startOfDay(today).getTime())
-        .sort((a, b) => a._date - b._date);
-      return upcoming[0] || withD.sort((a, b) => a._date - b._date)[0];
-    }
-    $: featured = pickFeatured();
-  
-    const recentActivity = [
-      { id: 'a1', text: `Updated: ${events[0].title}`, when: '2d ago' },
-      { id: 'a2', text: `New venue added for ${events[1].title}`, when: '4d ago' },
-      { id: 'a3', text: `Registration closed: ${events[3].title}`, when: '1w ago' }
-    ];
-  </script>
-  
-  <!-- Page -->
-  <div class="p-6 space-y-6">
-    <h1 class="text-3xl font-bold tracking-tight">Home</h1>
-  
-    <!-- Filter Shortcuts -->
-    <div class="flex flex-wrap gap-2">
-      {#each filters as f}
-        <Button
-          variant={filter === f.key ? 'default' : 'outline'}
-          on:click={() => setFilter(f.key)}
-          class="text-sm"
-          aria-pressed={filter === f.key}
-        >
-          {f.label}
-        </Button>
-      {/each}
+  $: daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  $: firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+  $: calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  $: emptyDays = Array.from({ length: firstDay }, (_, i) => null);
+</script>
+
+<!-- Ana Container - Responsive Grid Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-full">
+  <!-- Sol Taraf - Ana İçerik (3 kolon) -->
+  <div class="xl:col-span-3 space-y-6 w-full">
+    <!-- Başlık Bölümü -->
+    {#if isLoaded}
+      <div class="flex justify-between items-center" in:fly={{ y: -20, duration: 600, delay: 100 }}>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p class="text-gray-600 mt-1">Welcome back! Here's what's happening with your events.</p>
+        </div>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+          <Plus class="w-4 h-4" />
+          Create Event
+        </button>
+      </div>
+    {/if}
+
+    <!-- Animasyonlu İstatistik Kartları -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {#if isLoaded}
+        <!-- Total Events Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 hover:border-blue-200" 
+             in:fly={{ y: 20, duration: 600, delay: 200 }}>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Total Events</p>
+              <p class="text-2xl font-bold text-gray-900">{Math.round($eventCount)}</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendingUp class="w-3 h-3" />
+                +2 this week
+              </p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full transition-all duration-300 hover:bg-blue-200 hover:scale-110">
+              <Calendar class="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Participants Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 hover:border-green-200" 
+             in:fly={{ y: 20, duration: 600, delay: 300 }}>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Total Participants</p>
+              <p class="text-2xl font-bold text-gray-900">{Math.round($participantCount).toLocaleString()}</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendingUp class="w-3 h-3" />
+                +15% from last month
+              </p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full transition-all duration-300 hover:bg-green-200 hover:scale-110">
+              <Users class="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 hover:border-yellow-200" 
+             in:fly={{ y: 20, duration: 600, delay: 400 }}>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Revenue</p>
+              <p class="text-2xl font-bold text-gray-900">${Math.round($revenueCount).toLocaleString()}</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <TrendingUp class="w-3 h-3" />
+                +8% this month
+              </p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full transition-all duration-300 hover:bg-yellow-200 hover:scale-110">
+              <DollarSign class="w-6 h-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Growth Rate Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 hover:border-purple-200" 
+             in:fly={{ y: 20, duration: 600, delay: 500 }}>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Growth Rate</p>
+              <p class="text-2xl font-bold text-gray-900">{$growthCount.toFixed(1)}%</p>
+              <p class="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <Target class="w-3 h-3" />
+                Above target
+              </p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full transition-all duration-300 hover:bg-purple-200 hover:scale-110">
+              <TrendingUp class="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      {/if}
     </div>
-  
-    <!-- Main grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      <!-- Left: Upcoming -->
-      <Card class="rounded-2xl shadow-sm border-border/50 xl:col-span-2">
-        <CardHeader class="px-5 py-4 flex items-center justify-between">
-          <CardTitle class="text-[17px] font-semibold flex items-center gap-2">
-            <Clock class="w-4 h-4" /> Upcoming Events
-          </CardTitle>
-          <a href="/events" class="text-sm underline hover:no-underline">Explore events</a>
-        </CardHeader>
-        <CardContent class="px-5 py-4 space-y-4">
-          {#if eventsFiltered().length === 0}
-            <div class="text-sm text-muted-foreground">No events for this filter.</div>
-          {:else}
-            {#each eventsFiltered().slice(0, 4) as e}
-              <div class="flex gap-3 items-start">
-                <img src={e.image} alt={e.title} class="w-14 h-14 rounded object-cover" />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <strong class="truncate">{e.title}</strong>
-                    <Badge>{e.category}</Badge>
+
+    <!-- Alt Bölüm - İki Kolon -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {#if isLoaded}
+        <!-- Upcoming Events -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300" 
+             in:fly={{ x: -20, duration: 600, delay: 600 }}>
+          <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-900">Upcoming Events</h2>
+              <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-all duration-200 hover:scale-105">View All</button>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            {#each upcomingEvents as event, index}
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md" 
+                   in:scale={{ duration: 400, delay: 700 + (index * 100) }}>
+                <div class="flex items-center gap-3">
+                  <div class="bg-blue-100 p-2 rounded-lg transition-all duration-300 hover:bg-blue-200">
+                    <Calendar class="w-4 h-4 text-blue-600" />
                   </div>
-                  <div class="text-sm text-muted-foreground flex items-center gap-2">
-                    <CalendarIcon class="w-4 h-4" /> {e.date}
-                    <MapPin class="w-4 h-4 ml-2" /> {e.location}
+                  <div>
+                    <h3 class="font-medium text-gray-900">{event.name}</h3>
+                    <p class="text-sm text-gray-600">{event.date} • {event.participants} participants</p>
                   </div>
+                </div>
+                <span class="px-3 py-1 text-xs font-medium rounded-full transition-all duration-300 hover:scale-110 {event.status === 'confirmed' ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
+                  {event.status}
+                </span>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300" 
+             in:fly={{ x: 20, duration: 600, delay: 600 }}>
+          <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Activities</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            {#each recentActivities as activity, index}
+              <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-all duration-300 transform hover:scale-[1.02]" 
+                   in:fade={{ duration: 400, delay: 800 + (index * 100) }}>
+                <div class="bg-blue-100 p-1.5 rounded-full mt-1 transition-all duration-300 hover:bg-blue-200">
+                  <Clock class="w-3 h-3 text-blue-600" />
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-gray-900">{activity.action}</p>
+                  <p class="text-xs text-gray-600">{activity.user} • {activity.time}</p>
                 </div>
               </div>
             {/each}
-          {/if}
-        </CardContent>
-      </Card>
-  
-      <!-- Right column: Calendar + Featured + Activity -->
-      <div class="space-y-6">
-        <!-- Small Calendar -->
-        <Card class="rounded-2xl shadow-sm border-border/50">
-          <CardHeader class="px-5 py-4 flex items-center justify-between">
-            <CardTitle class="text-[17px] font-semibold flex items-center gap-2">
-              <CalendarIcon class="w-4 h-4" /> Calendar
-            </CardTitle>
-            <div class="flex items-center gap-2">
-              <Button variant="outline" size="icon" on:click={prevMonth} aria-label="Previous month">
-                <ChevronLeft class="w-4 h-4" />
-              </Button>
-              <div class="text-sm font-medium">
-                {new Date(calYear, calMonth, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-              </div>
-              <Button variant="outline" size="icon" on:click={nextMonth} aria-label="Next month">
-                <ChevronRight class="w-4 h-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent class="px-5 py-4">
-            <!-- Week headers -->
-            <div class="grid grid-cols-7 text-xs text-muted-foreground mb-2">
-              <div class="text-center">Sun</div>
-              <div class="text-center">Mon</div>
-              <div class="text-center">Tue</div>
-              <div class="text-center">Wed</div>
-              <div class="text-center">Thu</div>
-              <div class="text-center">Fri</div>
-              <div class="text-center">Sat</div>
-            </div>
-  
-            <!-- Days grid -->
-            {#key `${calYear}-${calMonth}`}
-              <div class="grid grid-cols-7 gap-1">
-                {#each calLeading as _}
-                  <div class="h-9"></div>
-                {/each}
-  
-                {#each calDayNumbers as day}
-                  <button
-                    class="h-9 rounded hover:bg-muted/70 transition relative flex items-center justify-center text-sm"
-                    class:selected={selectedDay && isSameDay(new Date(calYear, calMonth, day), selectedDay)}
-                    on:click={() => selectCalendarDay(day)}
-                    aria-label={`Select ${calYear}-${calMonth + 1}-${day}`}
-                  >
-                    {day}
-                    {#if eventsOnDay(calYear, calMonth, day).length > 0}
-                      <span class="absolute bottom-1 flex gap-0.5">
-                        {#each eventsOnDay(calYear, calMonth, day).slice(0,3) as _e}
-                          <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                        {/each}
-                      </span>
-                    {/if}
-                  </button>
-                {/each}
-              </div>
-            {/key}
-  
-            <div class="mt-3 text-xs text-muted-foreground">Click a day to filter events.</div>
-          </CardContent>
-        </Card>
-  
-        <!-- Featured Event -->
-        <Card class="rounded-2xl shadow-sm border-border/50">
-          <CardHeader class="px-5 py-4 flex items-center gap-2">
-            <Star class="w-4 h-4 text-amber-500" />
-            <CardTitle class="text-[17px] font-semibold">Featured Event</CardTitle>
-          </CardHeader>
-          <CardContent class="px-5 py-4 space-y-3">
-            <img src={featured.image} alt={featured.title} class="w-full h-32 object-cover rounded" />
-            <div class="flex items-center gap-2">
-              <strong class="truncate">{featured.title}</strong>
-              <Badge>{featured.category}</Badge>
-            </div>
-            <div class="text-sm text-muted-foreground flex items-center gap-2">
-              <CalendarIcon class="w-4 h-4" /> {featured.date}
-              <MapPin class="w-4 h-4 ml-2" /> {featured.location}
-            </div>
-            <p class="text-sm line-clamp-3">{featured.description}</p>
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Quick Actions -->
+    {#if isLoaded}
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300" 
+           in:fly={{ y: 20, duration: 600, delay: 1000 }}>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button class="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+            <Plus class="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
+            <span class="text-sm font-medium text-blue-700">Create Event</span>
+          </button>
+          
+          <button class="flex flex-col items-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+            <Users class="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+            <span class="text-sm font-medium text-green-700">Manage Users</span>
+          </button>
+          
+          <button class="flex flex-col items-center gap-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+            <BarChart3 class="w-6 h-6 text-yellow-600 group-hover:scale-110 transition-transform duration-300" />
+            <span class="text-sm font-medium text-yellow-700">View Reports</span>
+          </button>
+          
+          <button class="flex flex-col items-center gap-2 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+            <Settings class="w-6 h-6 text-purple-600 group-hover:scale-110 transition-transform duration-300" />
+            <span class="text-sm font-medium text-purple-700">Settings</span>
+          </button>
+        </div>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Sağ Taraf - STICKY Calendar (1 kolon) - RESPONSIVE -->
+  <div class="xl:col-span-1 w-full">
+    <!-- STICKY CONTAINER - SIDEBAR'A UYUMLU -->
+    <div class="sticky top-6 space-y-6 w-full">
+      {#if isLoaded}
+        <!-- Calendar Widget -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full" 
+             in:fly={{ x: 20, duration: 600, delay: 400 }}>
+          <!-- Calendar Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">
+              {months[currentMonth]} {currentYear}
+            </h2>
             <div class="flex gap-2">
-              <a href="/events" class="text-sm underline hover:no-underline">Explore events</a>
+              <button 
+                on:click={previousMonth}
+                class="p-2 hover:bg-blue-50 rounded-lg transition-all duration-300 transform hover:scale-110"
+              >
+                <ChevronLeft class="w-4 h-4 text-gray-600 hover:text-blue-600 transition-colors duration-300" />
+              </button>
+              <button 
+                on:click={nextMonth}
+                class="p-2 hover:bg-blue-50 rounded-lg transition-all duration-300 transform hover:scale-110"
+              >
+                <ChevronRight class="w-4 h-4 text-gray-600 hover:text-blue-600 transition-colors duration-300" />
+              </button>
             </div>
-          </CardContent>
-        </Card>
-  
-        <!-- Recent Activity -->
-        <Card class="rounded-2xl shadow-sm border-border/50">
-          <CardHeader class="px-5 py-4">
-            <CardTitle class="text-[17px] font-semibold">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent class="px-5 py-4 space-y-3">
-            {#each [{id:'a1',text:`Updated: ${events[0].title}`,when:'2d ago'},{id:'a2',text:`New venue added for ${events[1].title}`,when:'4d ago'},{id:'a3',text:`Registration closed: ${events[3].title}`,when:'1w ago'}] as a}
-              <div class="text-sm">
-                <div>{a.text}</div>
-                <div class="text-xs text-muted-foreground">{a.when}</div>
+          </div>
+
+          <!-- Days of Week -->
+          <div class="grid grid-cols-7 gap-1 mb-2">
+            {#each daysOfWeek as day}
+              <div class="text-xs font-medium text-gray-500 text-center py-2">
+                {day}
               </div>
             {/each}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="grid grid-cols-7 gap-1">
+            <!-- Empty days -->
+            {#each emptyDays as _}
+              <div class="h-8"></div>
+            {/each}
+
+            <!-- Calendar days -->
+            {#each calendarDays as day}
+              <div class="relative">
+                <button class="w-8 h-8 text-sm rounded-lg hover:bg-blue-50 transition-all duration-300 flex items-center justify-center transform hover:scale-110
+                  {day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear() 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'text-gray-700 hover:text-blue-600'
+                  }
+                  {calendarEvents[day] ? 'font-bold ring-2 ring-blue-200' : ''}
+                ">
+                  {day}
+                </button>
+                
+                <!-- Event indicator -->
+                {#if calendarEvents[day]}
+                  <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+
+          <!-- Event List for Selected Month -->
+          <div class="mt-6 pt-6 border-t border-gray-100">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">This Month's Events</h3>
+            <div class="space-y-2">
+              {#each Object.entries(calendarEvents) as [day, event], index}
+                <div class="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-all duration-300 transform hover:scale-[1.02]" 
+                     in:scale={{ duration: 400, delay: 600 + (index * 100) }}>
+                  <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
+                  <div class="flex-1">
+                    <p class="text-xs font-medium text-gray-900">{event.title}</p>
+                    <p class="text-xs text-gray-600">{months[currentMonth]} {day}</p>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Stats -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full" 
+             in:fly={{ x: 20, duration: 600, delay: 500 }}>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-transparent rounded-lg hover:from-green-100 transition-all duration-300">
+              <span class="text-sm text-gray-600">Today's Events</span>
+              <span class="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">3</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-all duration-300">
+              <span class="text-sm text-gray-600">This Week</span>
+              <span class="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">8</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-transparent rounded-lg hover:from-purple-100 transition-all duration-300">
+              <span class="text-sm text-gray-600">This Month</span>
+              <span class="text-sm font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded-full">24</span>
+            </div>
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
-  
-  <style>
-    button.selected { background: hsl(var(--muted)); }
-  </style>
-  
+</div>
