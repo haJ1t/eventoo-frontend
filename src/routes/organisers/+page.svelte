@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AppOrganiserCard from "$lib/components/app-organiser-card.svelte";
 	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
+
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
 	// Remove this import:
@@ -13,10 +14,24 @@
 	import { Building2, MapPin, Award, Search, TagIcon } from "lucide-svelte";
 	
 	let searchQuery = $state("");
-	let selectedOrganiser = $state(null);
-	let showModal = $state(false);
+
 	let selectedTags = $state([]);
 	let selectedLocations = $state([]); // Changed from selectedLocation to selectedLocations array
+	let selectedOrganiser = $state(null);
+	let isModalOpen = $state(false);
+
+	function handleViewDetails(organiser) {
+		selectedOrganiser = organiser;
+		isModalOpen = true;
+	}
+
+	function closeModal() {
+		isModalOpen = false;
+		// Use setTimeout to ensure the modal animation completes before clearing the organiser
+		setTimeout(() => {
+			selectedOrganiser = null;
+		}, 150);
+	}
 	
 	// Pagination state variables
     let currentPage = $state(1);
@@ -261,10 +276,7 @@
 		)
 	);
 
-	function handleViewDetails(organiser) {
-		selectedOrganiser = organiser;
-		showModal = true;
-	}
+
 
 	function toggleCategory(tag) {
 		if (selectedTags.includes(tag)) {
@@ -391,8 +403,8 @@
 			>
 				<AppOrganiserCard
 					{organiser}
-					onclick={handleViewDetails}
 					featured={organiser.featured}
+					onclick={() => handleViewDetails(organiser)}
 				/>
 			</div>
 		{/each}
@@ -437,9 +449,12 @@
 		  </Pagination.Content>
 		{/snippet}
 	</Pagination.Root>
-</div>
 
-<!-- Modal -->
-{#if showModal && selectedOrganiser}
-	<AppOrganiserDetailsModal bind:open={showModal} organiser={selectedOrganiser} />
-{/if}
+	<!-- Modal -->
+	{#if selectedOrganiser}
+		<AppOrganiserDetailsModal
+			organiser={selectedOrganiser}
+			bind:open={isModalOpen}
+		/>
+	{/if}
+</div>

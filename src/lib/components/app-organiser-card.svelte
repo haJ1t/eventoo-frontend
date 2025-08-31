@@ -4,7 +4,7 @@
 	import { Card, CardContent, CardFooter, CardHeader } from "$lib/components/ui/card";
 	import { Building2, MapPin, Calendar, Star } from "lucide-svelte";
 
-	let { organiser, onclick, featured = false } = $props();
+	let { organiser, onclick = null, featured = false } = $props();
 
 	function handleViewDetails() {
 		if (onclick) {

@@ -2,6 +2,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { goto } from '$app/navigation';
 	import { fade } from 'svelte/transition';
+	import { ArrowLeft } from "@lucide/svelte";
 
 	// Form state
 	let formData = $state({
@@ -20,6 +21,7 @@
 	let selectedTags = $state([]);
 	let showTagsDropdown = $state(false);
 	let isSubmitting = $state(false);
+	let customTagInput = $state('');
 
 	// Predefined options
 	const categoryOptions = [
@@ -46,6 +48,22 @@
 			selectedTags = [...selectedTags, tag];
 		}
 		formData.tags = selectedTags;
+	}
+
+	function addCustomTag() {
+		const trimmedTag = customTagInput.trim();
+		if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+			selectedTags = [...selectedTags, trimmedTag];
+			formData.tags = selectedTags;
+			customTagInput = '';
+		}
+	}
+
+	function handleCustomTagKeydown(event) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			addCustomTag();
+		}
 	}
 
 	function handleImageUpload(event) {
@@ -110,12 +128,9 @@
 	<!-- Header -->
 	<div class="mb-8">
 		<div class="flex items-center gap-4 mb-4">
-			<button 
-				onclick={handleCancel}
-				class="text-gray-500 hover:text-gray-700 transition-colors"
-			>
-				← Back
-			</button>
+			<Button variant="ghost" size="sm" onclick={handleCancel} class="h-9 w-9 p-0" disabled={false}>
+				<ArrowLeft class="w-4 h-4" />
+			</Button>
 			<h1 class="text-3xl font-bold tracking-tight">Add New Event</h1>
 		</div>
 		<p class="text-gray-600">Create a new event and share it with the community.</p>
@@ -253,12 +268,34 @@
 					</Button>
 					
 					{#if showTagsDropdown}
-						<div class="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+						<div class="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-64 overflow-y-auto">
+							<!-- Custom tag input -->
+							<div class="p-3 border-b border-gray-200">
+								<div class="flex gap-2">
+									<input
+										type="text"
+										bind:value={customTagInput}
+										onkeydown={handleCustomTagKeydown}
+										placeholder="Add custom tag..."
+										class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+									/>
+									<Button
+										type="button"
+										onclick={addCustomTag}
+										disabled={!customTagInput.trim()}
+										class="px-3 py-2 text-sm"
+									>
+										Add
+									</Button>
+								</div>
+							</div>
+							
+							<!-- Predefined tags -->
 							{#each availableTags as tag}
 								<button
 									type="button"
 									onclick={() => toggleTag(tag)}
-									class="w-full px-4 py-2 text-left rounded-md transition-colors flex items-center justify-between
+									class="w-full px-4 py-2 text-left rounded-none transition-colors flex items-center justify-between
 										{selectedTags.includes(tag) 
 											? 'bg-primary text-primary-foreground' 
 											: 'hover:bg-gray-100'

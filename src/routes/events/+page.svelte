@@ -422,5 +422,5 @@
 
 <!-- Modal -->
 {#if showModal && selectedEvent}
-	<AppEventDetailsModal bind:open={showModal} event={selectedEvent} />
+	<AppEventDetailsModal bind:isOpen={showModal} event={selectedEvent} />
 {/if}
