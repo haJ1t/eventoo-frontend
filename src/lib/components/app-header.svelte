@@ -1,17 +1,41 @@
 <script lang="ts">
-    import { Bell, Settings, User } from "@lucide/svelte";
-  </script>
+  import { Settings, User } from "@lucide/svelte";
+  import Notifications from "./Notifications.svelte";
   
-  <header class="bg-white border-b px-8 py-4 flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Evento</h1>
-    <div class="flex items-center space-x-6">
-      <Bell class="w-6 h-6 cursor-pointer hover:text-gray-600 transition-colors" />
-      <a href="/settings">
-        <Settings class="w-6 h-6 cursor-pointer hover:text-gray-600 transition-colors" />
-      </a>
-      <a href="./login">
-        <User class="w-7 h-7 rounded-full cursor-pointer hover:text-gray-600 transition-colors" />
-      </a>
-    </div>
-  </header>
+  // Notification state
+  let notificationsOpen = false;
+  let unreadCount = 0;
   
+  function handleNotificationToggle(event) {
+    notificationsOpen = event.detail.isOpen;
+  }
+  
+  function handleNotificationClose() {
+    notificationsOpen = false;
+  }
+  
+  function handleUnreadChange(event) {
+    unreadCount = event.detail.count;
+  }
+</script>
+
+<header class="bg-white border-b px-8 py-4 flex items-center justify-between relative">
+  <h1 class="text-2xl font-bold">Evento</h1>
+  <div class="flex items-center space-x-6">
+    <!-- Notifications Component -->
+    <Notifications 
+      bind:isOpen={notificationsOpen}
+      bind:unreadCount={unreadCount}
+      on:toggle={handleNotificationToggle}
+      on:close={handleNotificationClose}
+      on:unreadChange={handleUnreadChange}
+    />
+    
+    <a href="/settings">
+      <Settings class="w-6 h-6 cursor-pointer hover:text-gray-600 transition-colors" />
+    </a>
+    <a href="./login">
+      <User class="w-7 h-7 rounded-full cursor-pointer hover:text-gray-600 transition-colors" />
+    </a>
+  </div>
+</header>

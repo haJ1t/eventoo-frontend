@@ -3,6 +3,7 @@
   import { tweened } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
   import { fade, fly, scale } from 'svelte/transition';
+  import { goto } from '$app/navigation';
   
   import { 
     Calendar, Users, DollarSign, TrendingUp, 
@@ -44,6 +45,27 @@
       growthCount.set(12.5);
     }, 300);
   });
+
+  // Navigation fonksiyonları
+  function navigateToCreateEvent() {
+    goto('/events/add');
+  }
+
+  function navigateToManageUsers() {
+    goto('/login');
+  }
+
+  function navigateToReports() {
+    goto('/reports');
+  }
+
+  function navigateToSettings() {
+    goto('/settings');
+  }
+
+  function navigateToAllEvents() {
+    goto('/events');
+  }
   
   // Dashboard verileri
   let upcomingEvents = [
@@ -120,7 +142,11 @@
           <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p class="text-gray-600 mt-1">Welcome back! Here's what's happening with your events.</p>
         </div>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+        <!-- Create Event Butonu - /events/add -->
+        <button 
+          onclick={navigateToCreateEvent}
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+        >
           <Plus class="w-4 h-4" />
           Create Event
         </button>
@@ -213,7 +239,12 @@
           <div class="p-6 border-b border-gray-100">
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-gray-900">Upcoming Events</h2>
-              <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-all duration-200 hover:scale-105">View All</button>
+              <button 
+                onclick={navigateToAllEvents}
+                class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-all duration-200 hover:scale-105"
+              >
+                View All
+              </button>
             </div>
           </div>
           <div class="p-6 space-y-4">
@@ -267,22 +298,38 @@
            in:fly={{ y: 20, duration: 600, delay: 1000 }}>
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button class="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+          <!-- Create Event - Quick Action -->
+          <button 
+            onclick={navigateToCreateEvent}
+            class="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group"
+          >
             <Plus class="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
             <span class="text-sm font-medium text-blue-700">Create Event</span>
           </button>
           
-          <button class="flex flex-col items-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+          <!-- Manage Users -->
+          <button 
+            onclick={navigateToManageUsers}
+            class="flex flex-col items-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group"
+          >
             <Users class="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform duration-300" />
             <span class="text-sm font-medium text-green-700">Manage Users</span>
           </button>
           
-          <button class="flex flex-col items-center gap-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+          <!-- View Reports -->
+          <button 
+            onclick={navigateToReports}
+            class="flex flex-col items-center gap-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group"
+          >
             <BarChart3 class="w-6 h-6 text-yellow-600 group-hover:scale-110 transition-transform duration-300" />
             <span class="text-sm font-medium text-yellow-700">View Reports</span>
           </button>
           
-          <button class="flex flex-col items-center gap-2 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group">
+          <!-- Settings -->
+          <button 
+            onclick={navigateToSettings}
+            class="flex flex-col items-center gap-2 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all duration-300 transform hover:scale-110 hover:shadow-lg group"
+          >
             <Settings class="w-6 h-6 text-purple-600 group-hover:scale-110 transition-transform duration-300" />
             <span class="text-sm font-medium text-purple-700">Settings</span>
           </button>
@@ -306,13 +353,13 @@
             </h2>
             <div class="flex gap-2">
               <button 
-                on:click={previousMonth}
+                onclick={previousMonth}
                 class="p-2 hover:bg-blue-50 rounded-lg transition-all duration-300 transform hover:scale-110"
               >
                 <ChevronLeft class="w-4 h-4 text-gray-600 hover:text-blue-600 transition-colors duration-300" />
               </button>
               <button 
-                on:click={nextMonth}
+                onclick={nextMonth}
                 class="p-2 hover:bg-blue-50 rounded-lg transition-all duration-300 transform hover:scale-110"
               >
                 <ChevronRight class="w-4 h-4 text-gray-600 hover:text-blue-600 transition-colors duration-300" />
