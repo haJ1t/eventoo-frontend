@@ -33,7 +33,7 @@
   });
   
   // Sayfa yükleme animasyonu için
-  let isLoaded = false;
+  let isLoaded = $state(false);
   
   // Component mount olduğunda animasyonları başlat
   onMount(() => {
@@ -82,8 +82,8 @@
 
   // Calendar için
   let currentDate = new Date();
-  let currentMonth = currentDate.getMonth();
-  let currentYear = currentDate.getFullYear();
+  let currentMonth = $state(currentDate.getMonth());
+  let currentYear = $state(currentDate.getFullYear());
   
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -92,12 +92,55 @@
   
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
-  // Calendar events
-  let calendarEvents = {
-    15: { title: "Tech Conference", type: "conference" },
-    22: { title: "Music Festival", type: "festival" },
-    30: { title: "Art Exhibition", type: "exhibition" }
-  };
+  // User's events (liked or scheduled)
+  let userEvents = [
+    { id: 1, title: "Tech Conference 2024", date: "2025-09-15", time: "09:00", location: "Convention Center", type: "conference", isLiked: true, isScheduled: true },
+    { id: 2, title: "Music Festival", date: "2025-09-22", time: "18:00", location: "Central Park", type: "festival", isLiked: true, isScheduled: false },
+    { id: 3, title: "Art Exhibition Opening", date: "2025-09-30", time: "14:00", location: "Modern Art Gallery", type: "exhibition", isLiked: false, isScheduled: true },
+    { id: 4, title: "Networking Meetup", date: "2025-09-10", time: "19:00", location: "Business Hub", type: "networking", isLiked: true, isScheduled: false },
+    { id: 5, title: "AI Workshop Series", date: "2025-09-18", time: "10:00", location: "Tech Campus", type: "workshop", isLiked: false, isScheduled: true },
+    { id: 6, title: "Food & Wine Tasting", date: "2025-09-11", time: "16:00", location: "Downtown Restaurant", type: "social", isLiked: true, isScheduled: true }
+  ];
+  
+  // Selected date for viewing events
+  let selectedDate = $state(null);
+  
+  // Get events for selected date
+  const selectedDateEvents = $derived(() => {
+    if (!selectedDate) return [];
+    // Format date as YYYY-MM-DD in local timezone to avoid UTC conversion issues
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    return userEvents.filter(event => event.date === dateStr);
+  });
+  
+  // Function to select a date
+  function selectDate(day) {
+    const newDate = new Date(currentYear, currentMonth, day);
+    selectedDate = selectedDate && selectedDate.getTime() === newDate.getTime() ? null : newDate;
+  }
+  
+  // All user events for calendar display
+  const filteredEvents = $derived(userEvents);
+  
+  // Calendar events - processed from filtered user events
+  const calendarEvents = $derived(filteredEvents.reduce((acc, event) => {
+    const eventDate = new Date(event.date);
+    const eventDay = eventDate.getDate();
+    const eventMonth = eventDate.getMonth();
+    const eventYear = eventDate.getFullYear();
+    
+    // Only show events for the current month/year being displayed
+    if (eventMonth === currentMonth && eventYear === currentYear) {
+      if (!acc[eventDay]) {
+        acc[eventDay] = [];
+      }
+      acc[eventDay].push(event);
+    }
+    return acc;
+  }, {}));
   
   function getDaysInMonth(month, year) {
     return new Date(year, month + 1, 0).getDate();
@@ -110,25 +153,25 @@
   function previousMonth() {
     if (currentMonth === 0) {
       currentMonth = 11;
-      currentYear--;
+      currentYear = currentYear - 1;
     } else {
-      currentMonth--;
+      currentMonth = currentMonth - 1;
     }
   }
   
   function nextMonth() {
     if (currentMonth === 11) {
       currentMonth = 0;
-      currentYear++;
+      currentYear = currentYear + 1;
     } else {
-      currentMonth++;
+      currentMonth = currentMonth + 1;
     }
   }
   
-  $: daysInMonth = getDaysInMonth(currentMonth, currentYear);
-  $: firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-  $: calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  $: emptyDays = Array.from({ length: firstDay }, (_, i) => null);
+  const daysInMonth = $derived(getDaysInMonth(currentMonth, currentYear));
+  const firstDay = $derived(getFirstDayOfMonth(currentMonth, currentYear));
+  const calendarDays = $derived(Array.from({ length: daysInMonth }, (_, i) => i + 1));
+  const emptyDays = $derived(Array.from({ length: firstDay }, (_, i) => null));
 </script>
 
 <!-- Ana Container - Responsive Grid Layout -->
@@ -338,10 +381,9 @@
     {/if}
   </div>
 
-  <!-- Sağ Taraf - STICKY Calendar (1 kolon) - RESPONSIVE -->
+  <!-- Sağ Taraf - Calendar (1 kolon) - RESPONSIVE -->
   <div class="xl:col-span-1 w-full">
-    <!-- STICKY CONTAINER - SIDEBAR'A UYUMLU -->
-    <div class="sticky top-6 space-y-6 w-full">
+    <div class="space-y-6 w-full">
       {#if isLoaded}
         <!-- Calendar Widget -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full" 
@@ -386,39 +428,115 @@
             <!-- Calendar days -->
             {#each calendarDays as day}
               <div class="relative">
-                <button class="w-8 h-8 text-sm rounded-lg hover:bg-blue-50 transition-all duration-300 flex items-center justify-center transform hover:scale-110
-                  {day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear() 
-                    ? 'bg-blue-600 text-white shadow-lg' 
-                    : 'text-gray-700 hover:text-blue-600'
-                  }
-                  {calendarEvents[day] ? 'font-bold ring-2 ring-blue-200' : ''}
-                ">
+                <button 
+                  onclick={() => selectDate(day)}
+                  class="w-6 h-6 text-sm rounded transition-all duration-300 flex items-center justify-center font-medium relative
+                    {day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear() 
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg ring-2 ring-blue-200' 
+                      : selectedDate && selectedDate.getDate() === day && selectedDate.getMonth() === currentMonth && selectedDate.getFullYear() === currentYear
+                        ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg'
+                        : calendarEvents[day] 
+                          ? 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 hover:from-blue-50 hover:to-blue-100 hover:text-blue-700 shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                    }
+                  "
+                >
                   {day}
+                  
+                  <!-- Event indicators -->
+                  {#if calendarEvents[day]}
+                    <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                      {#if calendarEvents[day].some(event => event.isLiked)}
+                        <div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                      {/if}
+                      {#if calendarEvents[day].some(event => event.isScheduled)}
+                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      {/if}
+                    </div>
+                  {/if}
                 </button>
-                
-                <!-- Event indicator -->
-                {#if calendarEvents[day]}
-                  <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                {/if}
               </div>
             {/each}
           </div>
 
-          <!-- Event List for Selected Month -->
-          <div class="mt-6 pt-6 border-t border-gray-100">
-            <h3 class="text-sm font-medium text-gray-900 mb-3">This Month's Events</h3>
-            <div class="space-y-2">
-              {#each Object.entries(calendarEvents) as [day, event], index}
-                <div class="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-all duration-300 transform hover:scale-[1.02]" 
-                     in:scale={{ duration: 400, delay: 600 + (index * 100) }}>
-                  <div class="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
-                  <div class="flex-1">
-                    <p class="text-xs font-medium text-gray-900">{event.title}</p>
-                    <p class="text-xs text-gray-600">{months[currentMonth]} {day}</p>
+          <!-- Selected Date Events -->
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            {#if selectedDate}
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </h3>
+                
+                {#if selectedDateEvents().length > 0}
+                  <div class="space-y-3">
+                    {#each selectedDateEvents() as event, index}
+                      <div class="bg-gradient-to-r from-white to-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300" 
+                           in:fly={{ y: 20, duration: 400, delay: index * 100 }}>
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">{event.title}</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                              <div class="flex items-center gap-2">
+                                <Clock class="w-4 h-4" />
+                                <span>{event.time}</span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <Target class="w-4 h-4" />
+                                <span>{event.location}</span>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{event.type}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="flex flex-col gap-2 ml-4">
+                            {#if event.isLiked}
+                              <div class="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs">
+                                <Star class="w-3 h-3 fill-current" />
+                                <span>Liked</span>
+                              </div>
+                            {/if}
+                            {#if event.isScheduled}
+                              <div class="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs">
+                                <Calendar class="w-3 h-3" />
+                                <span>Scheduled</span>
+                              </div>
+                            {/if}
+                          </div>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {:else}
+                  <div class="text-center py-8">
+                    <div class="text-gray-400 mb-2">
+                      <Calendar class="w-12 h-12 mx-auto" />
+                    </div>
+                    <p class="text-gray-600">No events on this date</p>
+                  </div>
+                {/if}
+              </div>
+            {:else}
+              <div class="text-center py-8">
+                <div class="text-gray-400 mb-2">
+                  <Calendar class="w-12 h-12 mx-auto" />
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Select a Date</h3>
+                <p class="text-gray-600">Click on any date to view your liked or scheduled events</p>
+                
+                <!-- Legend -->
+                <div class="mt-4 flex justify-center gap-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span class="text-gray-600">Liked Events</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-gray-600">Scheduled Events</span>
                   </div>
                 </div>
-              {/each}
-            </div>
+              </div>
+            {/if}
           </div>
         </div>
 
