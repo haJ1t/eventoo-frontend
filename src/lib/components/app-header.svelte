@@ -20,7 +20,7 @@
 </script>
 
 <header class="bg-white border-b px-8 py-4 flex items-center justify-between relative">
-  <h1 class="text-2xl font-bold">Evento</h1>
+  <h1 class="text-2xl font-bold"></h1>
   <div class="flex items-center space-x-6">
     <!-- Notifications Component -->
     <Notifications 
