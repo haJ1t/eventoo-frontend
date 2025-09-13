@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { fade } from 'svelte/transition';
 	import { ArrowLeft } from "@lucide/svelte";
+	import FileUpload from '$lib/components/file-upload.svelte';
 
 	// Form state
 	let formData = $state({
@@ -67,11 +68,12 @@
 	}
 
 	function handleImageUpload(event) {
-		const file = event.target.files[0];
-		if (file) {
-			// Gerçek uygulamada burada dosyayı upload edeceksiniz
-			// Şimdilik placeholder image kullanıyoruz
+		const { files } = event.detail;
+		if (files) {
+			// In a real application, you would upload the file here
+			// For now, using placeholder image
 			formData.image = "/images/eventImages/placeholder.jpg";
+			console.log('File selected:', files);
 		}
 	}
 
@@ -332,15 +334,14 @@
 
 			<!-- Event Image -->
 			<div class="md:col-span-2">
-				<label for="event-image" class="block text-sm font-medium text-gray-700 mb-2">
+				<label class="block text-sm font-medium text-gray-700 mb-2">
 					Event Image
 				</label>
-				<input
-					id="event-image"
-					type="file"
+				<FileUpload
 					accept="image/*"
-					onchange={handleImageUpload}
-					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+					maxSize={5 * 1024 * 1024}
+					placeholder="Drag and drop your event image here, or click to browse"
+					on:change={handleImageUpload}
 				/>
 				<p class="text-sm text-gray-500 mt-1">Upload an image for your event (optional)</p>
 			</div>

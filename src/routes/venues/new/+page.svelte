@@ -13,6 +13,7 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import { ArrowLeft, Save, Plus, X, MapPin, Users, Building } from "lucide-svelte";
+  import FileUpload from '$lib/components/file-upload.svelte';
 
   // Form data
   let formData = {
@@ -24,7 +25,8 @@
     amenities: [],
     pricePerHour: '',
     contactEmail: '',
-    contactPhone: ''
+    contactPhone: '',
+    images: []
   };
 
   let newAmenity = '';
@@ -73,6 +75,19 @@
     localStorage.setItem('venue_draft', JSON.stringify(formData));
     alert('Draft saved!');
   };
+
+  // Add image upload handler
+  function handleImageUpload(event) {
+    const { files } = event.detail;
+    if (files) {
+      if (Array.isArray(files)) {
+        formData.images = [...formData.images, ...files];
+      } else {
+        formData.images = [...formData.images, files];
+      }
+      console.log('Images selected:', formData.images);
+    }
+  }
 
   // Add amenity
   function addAmenity() {
@@ -252,6 +267,18 @@
                 rows="4"
                 class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               ></textarea>
+            </div>
+
+            <div class="space-y-2">
+              <Label>Venue Images</Label>
+              <FileUpload
+                accept="image/*"
+                maxSize={5 * 1024 * 1024}
+                placeholder="Drag and drop venue images here, or click to browse"
+                multiple={true}
+                on:change={handleImageUpload}
+              />
+              <p class="text-sm text-muted-foreground">Upload high-quality images to showcase your venue</p>
             </div>
           </CardContent>
         </Card>

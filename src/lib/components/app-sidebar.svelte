@@ -18,7 +18,7 @@
 <Sidebar.Provider>
   <Sidebar.Root class="h-screen" collapsible="icon">
     <!-- Logo Header -->
-    <Sidebar.Header class="px-3.5 py-6 group/header">
+    <Sidebar.Header class="px-3.5 py-3 group/header">
       <div class="flex items-center gap-5">
         <!-- Icon that transforms to trigger on hover when collapsed -->
         <div class="relative">
