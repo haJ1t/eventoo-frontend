@@ -871,7 +871,7 @@
 <!-- ✅ Venue Details Modal - "View Full Details" event handler eklendi -->
 {#if selectedVenueForDetails}
   <VenueDetailsModal
-    bind:isOpen={showVenueDetails}
+    bind:open={showVenueDetails}
     venue={selectedVenueForDetails}
     on:close={handleCloseVenueDetails}
     on:edit={handleEditVenueFromModal}
