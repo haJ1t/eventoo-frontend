@@ -119,3 +119,25 @@
     @apply bg-background text-foreground;
   }
 }
+/* Tabs specific styles */
+.tabs [role="tablist"] {
+  display: flex;
+}
+
+.tabs [role="tab"] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tabs [role="tab"]:disabled {
+  cursor: not-allowed;
+}
+
+.tabs [role="tabpanel"] {
+  outline: none;
+}
+
+.tabs [role="tabpanel"]:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}

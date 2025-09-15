@@ -319,13 +319,9 @@
 			
 			{#if organiser.featured}
 				<div class="absolute top-4 left-4">
-					<Badge 
-						href="#"
-						variant="secondary"
-						class="bg-amber-100 text-amber-800 border-amber-300"
-					>
-						<Star class="w-3 h-3 mr-1 inline" /> Featured Organiser
-					</Badge>
+					<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 border border-amber-300">
+						<Star class="w-3 h-3 mr-1" /> Featured Organiser
+					</span>
 				</div>
 			{/if}
 		</div>
@@ -338,9 +334,9 @@
 				<div class="space-y-4">
 					<div class="flex items-center gap-3 flex-wrap">
 						<h1 class="text-3xl font-bold">{organiser.name}</h1>
-					<Badge href="#" variant="outline" class="text-sm">
-						{organiser.tag}
-					</Badge>
+						<span class="inline-flex items-center px-2 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800 border border-gray-300">
+							{organiser.tag}
+						</span>
 					</div>
 					
 					<div class="flex items-center gap-6 text-gray-600">
@@ -372,9 +368,9 @@
 					<h2 class="text-2xl font-semibold">Specialties</h2>
 					<div class="flex flex-wrap gap-2">
 						{#each organiser.tags as tag}
-							<Badge href="#" variant="secondary" class="text-sm px-3 py-1">
+							<span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800 border border-gray-300">
 								{tag}
-							</Badge>
+							</span>
 						{/each}
 					</div>
 				</div>
@@ -397,6 +393,7 @@
 											onmouseenter={() => handleMouseEnter(starIndex)}
 											onmouseleave={handleMouseLeave}
 											class="transition-all hover:scale-110 transform"
+											aria-label="Rate {starIndex} stars"
 										>
 											<Star class="w-10 h-10 {isActive ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}" />
 										</button>
@@ -516,13 +513,14 @@
 					<h3 class="text-xl font-semibold mb-4">Connect</h3>
 					<div class="space-y-3">
 						{#each Object.entries(organiser.socialMedia) as [platform, handle]}
+							{@const IconComponent = getSocialIcon(platform)}
 							<a 
 								href={platform === 'website' ? `https://${handle}` : `https://${platform}.com/${handle}`}
 								target="_blank"
 								rel="noopener noreferrer"
 								class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
 							>
-								<svelte:component this={getSocialIcon(platform)} class="w-5 h-5 text-gray-600" />
+								<IconComponent class="w-5 h-5 text-gray-600" />
 								<span class="text-sm font-medium">{handle}</span>
 							</a>
 						{/each}
