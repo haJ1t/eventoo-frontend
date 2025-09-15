@@ -1,37 +1,34 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
   import { goto } from '$app/navigation';
+  import { fade, fly } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
   import { 
     Plus, 
     Search, 
     Filter, 
     Grid3X3, 
     List, 
-    MapPin, 
-    Users, 
-    Calendar,
-    Star,
-    ChevronLeft,
+    ChevronLeft, 
     ChevronRight,
-    MoreHorizontal,
+    MapPin,
+    Users,
+    Star,
+    Calendar,
+    Clock,
+    DollarSign,
+    Eye,
     Edit,
-    Trash2,
-    Eye
+    Trash2
   } from 'lucide-svelte';
   
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-  } from '$lib/components/ui/dialog';
+  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '$lib/components/ui/dialog';
+  import { Separator } from '$lib/components/ui/separator';
+  import * as Pagination from "$lib/components/ui/pagination/index.js";
   
   import AppVenueCard from '$lib/components/app-venue-card.svelte';
   import VenueDetailsModal from '$lib/components/VenueDetailsModal.svelte';
@@ -44,7 +41,7 @@
   let selectedStatus = 'all';
   let viewMode = 'grid'; // 'grid' | 'list'
   let currentPage = 1;
-  let itemsPerPage = 12;
+  let itemsPerPage = 6;
   let isLoading = true;
   
   // Modal states
@@ -721,7 +718,7 @@
       Showing {paginatedVenues.length} of {filteredVenues.length} venues
     </span>
     <span>
-      Page {currentPage} of {totalPages}
+      Page {currentPage} of {Math.ceil(filteredVenues.length / itemsPerPage)}
     </span>
   </div>
 
@@ -796,57 +793,36 @@
     <!-- Pagination -->
     {#if totalPages > 1}
       <div class="mt-8">
-        <div class="flex justify-center">
-          <div class="flex items-center gap-2">
-            <!-- Previous Button -->
-            <Button
-              variant="outline"
-              size="sm"
-              class="px-3 py-2 flex items-center gap-1"
-              disabled={currentPage === 1}
-              on:click={() => goToPage(currentPage - 1)}
-            >
-              <ChevronLeft class="h-4 w-4" />
-              Previous
-            </Button>
-
-            <!-- Page Numbers -->
-            <div class="flex items-center gap-1">
-              {#each Array.from({ length: totalPages }, (_, i) => i + 1) as page}
-                {#if page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)}
-                  <Button
-                    variant={page === currentPage ? "default" : "outline"}
-                    size="sm"
-                    class="px-3 py-2 min-w-[40px] {page === currentPage ? 'bg-blue-600 text-white border-blue-600' : ''}"
-                    disabled={false}
-                    on:click={() => goToPage(page)}
-                  >
-                    {page}
-                  </Button>
-                {:else if page === currentPage - 3 || page === currentPage + 3}
-                  <span class="px-2 py-2 text-gray-500">...</span>
+        <Pagination.Root
+          class=""
+          count={filteredVenues.length} 
+          perPage={itemsPerPage}
+          bind:page={currentPage}
+        >
+          {#snippet children({ pages, currentPage: paginationCurrentPage })}
+            <Pagination.Content class="">
+              <Pagination.Item>
+                <Pagination.PrevButton class="" children={null}/>
+              </Pagination.Item>
+              {#each pages as page (page.key)}
+                {#if page.type === "ellipsis"}
+                  <Pagination.Item class="bg-primary text-white">
+                    <Pagination.Ellipsis class=""/>
+                  </Pagination.Item>
+                {:else}
+                  <Pagination.Item>
+                    <Pagination.Link class="" {page} isActive={paginationCurrentPage === page.value}>
+                      {page.value}
+                    </Pagination.Link>
+                  </Pagination.Item>
                 {/if}
               {/each}
-            </div>
-
-            <!-- Next Button -->
-            <Button
-              variant="outline"
-              size="sm"
-              class="px-3 py-2 flex items-center gap-1"
-              disabled={currentPage === totalPages}
-              on:click={() => goToPage(currentPage + 1)}
-            >
-              Next
-              <ChevronRight class="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
-        <!-- Page Info -->
-        <div class="text-center text-sm text-gray-600 mt-4">
-          Page {currentPage} of {totalPages} • {filteredVenues.length} total venues
-        </div>
+              <Pagination.Item>
+                <Pagination.NextButton class="" children={null}/>
+              </Pagination.Item>
+            </Pagination.Content>
+          {/snippet}
+        </Pagination.Root>
       </div>
     {/if}
   {/if}

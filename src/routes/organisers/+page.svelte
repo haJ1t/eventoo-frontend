@@ -388,11 +388,15 @@
 		</div>
 	</div>
 
-	<div class="flex items-center justify-between">
-    	<p class="text-sm text-muted-foreground">
-          Showing {paginatedOrganisers.length} of {filteredOrganisers.length} organisers
-        </p>
-    </div>
+	<!-- Results Info -->
+  <div class="flex items-center justify-between text-sm text-gray-600">
+    <span>
+      Showing {paginatedOrganisers.length} of {filteredOrganisers.length} organisers
+    </span>
+    <span>
+      Page {currentPage} of {Math.ceil(filteredOrganisers.length / itemsPerPage)}
+    </span>
+  </div>
 
 	<!-- Organiser cards (including featured) -->
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
