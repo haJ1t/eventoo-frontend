@@ -1,9 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { goto } from '$app/navigation';
-  import { fade, fly } from 'svelte/transition';
+  import { Dialog, DialogContent, DialogHeader, DialogTitle } from "$lib/components/ui/dialog";
+  import { Button } from "$lib/components/ui/button";
+  import { Badge } from "$lib/components/ui/badge";
+  import { Separator } from "$lib/components/ui/separator";
   import { 
-    X, 
     MapPin, 
     Users, 
     Star, 
@@ -18,14 +20,15 @@
     Utensils,
     Eye,
     Edit,
-    Trash2
+    Trash2,
+    Mail,
+    Phone,
+    Globe,
+    Twitter,
+    Instagram,
+    Facebook,
+    Linkedin
   } from 'lucide-svelte';
-  
-  import { Button } from '$lib/components/ui/button';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Card, CardContent } from '$lib/components/ui/card';
-  import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
-  import { Separator } from '$lib/components/ui/separator';
 
   export let open = false;
   export let venue: any = null;
@@ -37,6 +40,12 @@
     end: string;
     available: boolean;
   }
+
+  // User rating state
+  let userRating = 0;
+  let hoverRating = 0;
+  let reviewText = '';
+  let hasRated = false;
 
   function closeModal() {
     open = false;
@@ -54,10 +63,40 @@
   }
 
   function handleViewFullDetails() {
-    if (venue) {
-      closeModal(); // Close modal first
-      goto(`/venues/${venue.id}`); // Then navigate using SvelteKit's goto
+    if (venue && venue.id) {
+      closeModal();
+      setTimeout(() => {
+        goto(`/venues/${venue.id}`);
+      }, 100);
     }
+  }
+
+  // Rating functions
+  function setRating(rating) {
+    userRating = rating;
+    hoverRating = 0;
+  }
+
+  function handleMouseEnter(rating) {
+    hoverRating = rating;
+  }
+
+  function handleMouseLeave() {
+    hoverRating = 0;
+  }
+
+  function submitRating() {
+    if (userRating > 0 && reviewText.trim()) {
+      hasRated = true;
+      console.log(`User rated venue ${venue?.name} with ${userRating} stars and review: ${reviewText}`);
+    }
+  }
+
+  function resetRating() {
+    userRating = 0;
+    hoverRating = 0;
+    reviewText = '';
+    hasRated = false;
   }
 
   function getAmenityIcon(amenity: string) {
@@ -76,6 +115,17 @@
     return iconMap[amenity] || Clock;
   }
 
+  function getSocialIcon(platform) {
+    switch (platform) {
+      case 'twitter': return Twitter;
+      case 'instagram': return Instagram;
+      case 'facebook': return Facebook;
+      case 'linkedin': return Linkedin;
+      case 'website': return Globe;
+      default: return Globe;
+    }
+  }
+
   function formatPrice(price: number) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -91,12 +141,6 @@
     });
   }
 
-  function getStatusColor(status: string) {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800 border-green-200' 
-      : 'bg-red-100 text-red-800 border-red-200';
-  }
-
   function getAvailabilityText(availability: Record<string, AvailabilityInfo>) {
     const availableDays = Object.entries(availability)
       .filter(([day, info]) => info.available)
@@ -109,122 +153,147 @@
 </script>
 
 <Dialog bind:open>
-  <DialogContent portalProps={{}} class="max-w-4xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
+  <DialogContent portalProps={{}} class="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
     {#if venue}
-      <!-- Header with banner image -->
-      <div class="relative h-48 bg-gradient-to-r from-blue-600 to-purple-600 flex-shrink-0">
+      <!-- Venue Header/Banner -->
+      <div class="relative">
         <img 
           src={venue.image} 
-          alt={`Main image of ${venue.name}`}
-          class="w-full h-full object-cover"
+          alt={venue.name}
+          class="w-full h-64 object-cover rounded-t-lg"
         />
-        <div class="absolute inset-0 bg-black/20"></div>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="absolute top-4 right-4 text-white hover:bg-white/20"
-          onClick={closeModal}
-          disabled={false}
-        >
-          <X class="h-4 w-4" />
-        </Button>
+        
+        {#if venue.featured}
+          <div class="absolute top-4 left-4">
+            <Badge href="#"
+              variant="secondary"
+              class="bg-amber-100 text-amber-800 border-amber-300"
+            >
+              <Star class="w-3 h-3 mr-1 inline" /> Featured Venue
+            </Badge>
+          </div>
+        {/if}
       </div>
 
-      <!-- Scrollable content -->
-      <div class="flex-1 overflow-y-auto min-h-0">
-        <!-- Header section -->
-        <div class="p-6 pb-4">
-          <DialogHeader class="pb-4">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <DialogTitle class="text-2xl font-bold mb-2">{venue.name}</DialogTitle>
-                <div class="flex items-center gap-2 text-muted-foreground mb-3">
-                  <MapPin class="h-4 w-4" />
-                  <span>{venue.location}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Badge href="#" class={getStatusColor(venue.status)}>
-                    {venue.status.charAt(0).toUpperCase() + venue.status.slice(1)}
-                  </Badge>
-                  {#if venue.tags && venue.tags.length > 0}
-                    {#each venue.tags.slice(0, 3) as tag}
-                      <Badge href="#" variant="secondary" class="bg-blue-100 text-blue-800">
-                        {tag}
-                      </Badge>
-                    {/each}
-                  {/if}
-                </div>
-              </div>
+      <!-- Content -->
+      <div class="p-6 space-y-6">
+        <!-- Header -->
+        <DialogHeader class="space-y-2">
+          <div class="flex items-center gap-2">
+            <Badge href="#" variant="outline" class="text-xs">
+              {venue.type}
+            </Badge>
+            <div class="flex items-center text-amber-600 text-sm">
+              <Star class="w-4 h-4 mr-1 fill-amber-400 text-amber-400" />
+              {venue.rating} / 5
             </div>
-          </DialogHeader>
-        </div>
+          </div>
+          <DialogTitle class="text-3xl font-bold">{venue.name}</DialogTitle>
+          <div class="flex items-center text-gray-600">
+            <MapPin class="w-4 h-4 mr-1" />
+            {venue.location}
+          </div>
+        </DialogHeader>
 
-        <Separator class="my-4" />
-
-        <!-- Key metrics -->
-        <div class="p-6 py-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center">
-              <div class="flex items-center justify-center mb-2">
-                <Users class="h-5 w-5 text-blue-600" />
-              </div>
-              <div class="text-2xl font-bold">{venue.capacity}</div>
-              <div class="text-sm text-muted-foreground">Capacity</div>
-            </div>
-            <div class="text-center">
-              <div class="flex items-center justify-center mb-2">
-                <Star class="h-5 w-5 text-yellow-500" />
-              </div>
-              <div class="text-2xl font-bold">{venue.rating}</div>
-              <div class="text-sm text-muted-foreground">Rating</div>
-            </div>
-            <div class="text-center">
-              <div class="flex items-center justify-center mb-2">
-                <Calendar class="h-5 w-5 text-green-600" />
-              </div>
-              <div class="text-2xl font-bold">{venue.upcomingEvents}</div>
-              <div class="text-sm text-muted-foreground">Upcoming</div>
-            </div>
-            <div class="text-center">
-              <div class="flex items-center justify-center mb-2">
-                <DollarSign class="h-5 w-5 text-purple-600" />
-              </div>
-              <div class="text-2xl font-bold">{formatPrice(venue.pricePerHour)}</div>
-              <div class="text-sm text-muted-foreground">Per Hour</div>
-            </div>
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <Users class="w-6 h-6 mx-auto mb-2 text-blue-600" />
+            <div class="text-2xl font-bold">{venue.capacity}</div>
+            <div class="text-sm text-gray-600">Capacity</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <Calendar class="w-6 h-6 mx-auto mb-2 text-green-600" />
+            <div class="text-2xl font-bold">{venue.upcomingEvents}</div>
+            <div class="text-sm text-gray-600">Upcoming</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <DollarSign class="w-6 h-6 mx-auto mb-2 text-purple-600" />
+            <div class="text-2xl font-bold">{formatPrice(venue.pricePerHour)}</div>
+            <div class="text-sm text-gray-600">Per Hour</div>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <Clock class="w-6 h-6 mx-auto mb-2 text-orange-600" />
+            <div class="text-2xl font-bold">{venue.totalBookings}</div>
+            <div class="text-sm text-gray-600">Total Bookings</div>
           </div>
         </div>
 
-        <Separator class="my-4" />
-
-        <!-- Description -->
-        <div class="p-6 py-4">
-          <h3 class="text-lg font-semibold mb-3">About this venue</h3>
-          <p class="text-muted-foreground leading-relaxed">{venue.description}</p>
+        <!-- Description Section -->
+        <div class="space-y-2">
+          <h3 class="text-lg font-semibold">About</h3>
+          <p class="text-muted-foreground leading-relaxed">
+            {venue.description}
+          </p>
         </div>
 
-        <Separator class="my-4" />
-
         <!-- Amenities -->
-        <div class="p-6 py-4">
-          <h3 class="text-lg font-semibold mb-3">Amenities</h3>
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold">Amenities</h3>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
             {#each venue.amenities as amenity}
-              <div class="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                <svelte:component this={getAmenityIcon(amenity)} class="h-4 w-4 text-muted-foreground" />
+              <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                <svelte:component this={getAmenityIcon(amenity)} class="w-4 h-4 text-gray-500" />
                 <span class="text-sm">{amenity}</span>
               </div>
             {/each}
           </div>
         </div>
 
+        <!-- Contact & Social Media -->
+        {#if venue.contact || venue.socialMedia}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Contact Info -->
+            {#if venue.contact}
+              <div class="space-y-3">
+                <h3 class="text-lg font-semibold">Contact Information</h3>
+                <div class="space-y-2">
+                  {#if venue.contact.email}
+                    <div class="flex items-center gap-2">
+                      <Mail class="w-4 h-4 text-gray-500" />
+                      <a href={`mailto:${venue.contact.email}`} class="text-primary hover:underline">
+                        {venue.contact.email}
+                      </a>
+                    </div>
+                  {/if}
+                  {#if venue.contact.phone}
+                    <div class="flex items-center gap-2">
+                      <Phone class="w-4 h-4 text-gray-500" />
+                      <a href={`tel:${venue.contact.phone}`} class="hover:underline">
+                        {venue.contact.phone}
+                      </a>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+
+            <!-- Social Media -->
+            {#if venue.socialMedia}
+              <div class="space-y-3">
+                <h3 class="text-lg font-semibold">Connect</h3>
+                <div class="flex flex-wrap gap-3">
+                  {#each Object.entries(venue.socialMedia) as [platform, handle]}
+                    <a 
+                      href={`https://${platform}.com/${handle}`} 
+                      class="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                    >
+                      <svelte:component this={getSocialIcon(platform)} class="w-4 h-4" />
+                      <span class="text-sm">{handle}</span>
+                    </a>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+          </div>
+        {/if}
+
         <!-- Availability -->
         {#if venue.availability}
-          <Separator class="my-4" />
-          <div class="p-6 py-4">
-            <h3 class="text-lg font-semibold mb-3">Availability</h3>
-            <div class="bg-muted/50 rounded-lg p-4">
-              <p class="text-sm text-muted-foreground mb-3">{getAvailabilityText(venue.availability)}</p>
+          <div class="space-y-3">
+            <h3 class="text-lg font-semibold">Availability</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-gray-600 mb-3">{getAvailabilityText(venue.availability)}</p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 {#each Object.entries(venue.availability) as [day, info]}
                   {@const availabilityInfo = info as AvailabilityInfo}
@@ -240,81 +309,102 @@
           </div>
         {/if}
 
-        <!-- Additional Images -->
-        {#if venue.images && venue.images.length > 1}
-          <Separator class="my-4" />
-          <div class="p-6 py-4">
-            <h3 class="text-lg font-semibold mb-3">Gallery</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {#each venue.images.slice(1, 5) as image, index}
-                <img 
-                  src={image} 
-                  alt={`${venue.name} image ${index + 2}`}
-                  class="w-full h-24 object-cover rounded-lg"
-                />
-              {/each}
-            </div>
-          </div>
-        {/if}
+        <Separator class="my-6" />
 
-        <!-- Statistics -->
-        <Separator class="my-4" />
-        <div class="p-6 py-4">
-          <h3 class="text-lg font-semibold mb-3">Details</h3>
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">Total Bookings:</span>
-              <span class="font-medium">{venue.totalBookings}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">Venue Type:</span>
-              <span class="font-medium">{venue.type}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">Created:</span>
-              <span class="font-medium">{formatDate(venue.createdAt)}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-muted-foreground">Last Updated:</span>
-              <span class="font-medium">{formatDate(venue.updatedAt)}</span>
-            </div>
+        <!-- Rate This Venue -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold">Rate This Venue</h3>
+          <div class="bg-gray-50 p-6 rounded-lg">
+            {#if !hasRated}
+              <p class="text-gray-600 mb-4">How would you rate this venue?</p>
+              
+              <!-- Star Rating -->
+              <div class="mb-4">
+                <div class="flex items-center gap-2 mb-2">
+                  {#each Array(5) as _, i}
+                    {@const starIndex = i + 1}
+                    {@const isActive = (hoverRating > 0 ? starIndex <= hoverRating : starIndex <= userRating)}
+                    <button
+                      onclick={() => setRating(starIndex)}
+                      onmouseenter={() => handleMouseEnter(starIndex)}
+                      onmouseleave={handleMouseLeave}
+                      class="transition-all hover:scale-110 transform"
+                    >
+                      <Star class="w-8 h-8 {isActive ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}" />
+                    </button>
+                  {/each}
+                  {#if (hoverRating > 0 ? hoverRating : userRating) > 0}
+                    <span class="ml-2 text-lg font-medium text-gray-700">{hoverRating > 0 ? hoverRating : userRating} out of 5</span>
+                  {/if}
+                </div>
+              </div>
+              
+              <!-- Review Text -->
+              {#if userRating > 0}
+                <div class="mb-4">
+                  <label for="review-text" class="block text-sm font-medium text-gray-700 mb-2">
+                    Write your review *
+                  </label>
+                  <textarea
+                    id="review-text"
+                    bind:value={reviewText}
+                    placeholder="Share your experience with this venue..."
+                    class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows="4"
+                  ></textarea>
+                  {#if reviewText.trim().length < 10 && reviewText.length > 0}
+                    <p class="text-sm text-red-500 mt-1">Review must be at least 10 characters long</p>
+                  {/if}
+                </div>
+                
+                <div class="flex gap-3">
+                  <Button 
+                    onclick={submitRating} 
+                    class="" 
+                    disabled={!reviewText.trim() || reviewText.trim().length < 10}
+                  >
+                    Submit Review
+                  </Button>
+                  <Button onclick={resetRating} variant="outline" class="" disabled={false}>
+                    Clear
+                  </Button>
+                </div>
+              {/if}
+            {:else}
+              <div class="text-center">
+                <p class="text-green-600 font-medium mb-3">Thank you for your review!</p>
+                <div class="flex justify-center items-center gap-2 mb-3">
+                  <span class="text-gray-600">You rated:</span>
+                  {#each Array(5) as _, i}
+                    <Star class="w-6 h-6 {i < userRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}" />
+                  {/each}
+                  <span class="font-semibold text-lg">{userRating} out of 5</span>
+                </div>
+                <div class="bg-white p-4 rounded-lg border mb-4">
+                  <p class="text-gray-700 italic">"{reviewText}"</p>
+                </div>
+                <Button onclick={resetRating} variant="outline" class="" disabled={false}>
+                  Change Review
+                </Button>
+              </div>
+            {/if}
           </div>
         </div>
-      </div>
 
-      <!-- Footer actions - moved outside scrollable area -->
-      <div class="flex-shrink-0 border-t bg-background">
-        <div class="p-6">
-          <div class="flex flex-col sm:flex-row gap-3">
-            <Button 
-              class="flex-1" 
-              onClick={handleViewFullDetails}
-              disabled={false}
-            >
-              <Eye class="h-4 w-4 mr-2" />
-              View Full Details
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              class="flex-1" 
-              onClick={handleEdit}
-              disabled={false}
-            >
-              <Edit class="h-4 w-4 mr-2" />
-              Edit Venue
-            </Button>
-            
-            <Button 
-              variant="destructive" 
-              class="flex-1" 
-              onClick={handleDelete}
-              disabled={false}
-            >
-              <Trash2 class="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-4 border-t">
+          <Button onclick={handleViewFullDetails} class="flex-1" disabled={false}>
+            <Eye class="w-4 h-4 mr-2" />
+            View Full Details
+          </Button>
+          <Button onclick={handleEdit} variant="outline" class="flex-1" disabled={false}>
+            <Edit class="w-4 h-4 mr-2" />
+            Edit Venue
+          </Button>
+          <Button onclick={handleDelete} variant="destructive" class="flex-1" disabled={false}>
+            <Trash2 class="w-4 h-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
     {/if}
