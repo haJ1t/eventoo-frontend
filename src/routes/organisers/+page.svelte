@@ -1,302 +1,114 @@
 <script lang="ts">
-	import AppOrganiserCard from "$lib/components/app-organiser-card.svelte";
-	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
+	import { goto } from "$app/navigation";
+	import {
+		Briefcase,
+		MapPin,
+		Search,
+		Filter,
+		LayoutGrid,
+		List,
+		Plus,
+		Download,
+		TrendingUp,
+		Users,
+		Star,
+		Award,
+		Building2,
+		Globe,
+		Mail,
+		Phone,
+		ArrowUpRight,
+		Tag,
+	} from "lucide-svelte";
+
+	import { Button } from "$lib/components/ui/button";
+	import { Badge } from "$lib/components/ui/badge";
+	import * as Pagination from "$lib/components/ui/pagination/index.js";
+	import { fade } from "svelte/transition";
+	import { flip } from "svelte/animate";
 
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
-	// Remove this import:
-	// import AppFilterTags from "$lib/components/app-filter-tags.svelte";
-	import * as Pagination from "$lib/components/ui/pagination/index.js";
-	import { Button } from "$lib/components/ui/button";
-	// Import Svelte's transition and animation functions
-	import { fade } from 'svelte/transition';
-	import { flip } from 'svelte/animate';
-	import { Building2, MapPin, Award, Search, TagIcon } from "lucide-svelte";
-	
-	let searchQuery = $state("");
+	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
+	import { organisers } from "$lib/data/organisers";
+	import type { Organiser } from "$lib/data/organisers";
 
+	// State
+	let searchQuery = $state("");
 	let selectedTags = $state([]);
-	let selectedLocations = $state([]); // Changed from selectedLocation to selectedLocations array
-	let selectedOrganiser = $state(null);
+	let selectedLocations = $state([]);
+	let activeDropdown = $state(null);
+	let viewMode = $state("grid"); // 'grid' | 'list'
+	let currentPage = $state(1);
+	let itemsPerPage = $state(9);
+
+	// Modal state
+	let selectedOrganiser = $state<Organiser | null>(null);
 	let isModalOpen = $state(false);
 
-	function handleViewDetails(organiser) {
-		selectedOrganiser = organiser;
-		isModalOpen = true;
-	}
+	// Derived Values
+	const uniqueTags = $derived.by(() => [
+		...new Set(organisers.flatMap((o) => o.tags)),
+	]);
+	const uniqueLocations = $derived.by(() => [
+		...new Set(organisers.map((o) => o.location)),
+	]);
 
-	function closeModal() {
-		isModalOpen = false;
-		// Use setTimeout to ensure the modal animation completes before clearing the organiser
-		setTimeout(() => {
-			selectedOrganiser = null;
-		}, 150);
-	}
-	
-	// Pagination state variables
-    let currentPage = $state(1);
-    let itemsPerPage = $state(6);
+	const filteredOrganisers = $derived.by(() => {
+		let filtered = organisers;
 
-	// Add state to track which dropdown is currently open
-	let activeDropdown = $state(null); // 'location' | 'tags' | null
-
-	// Sample organisers data with updated image paths
-	const organisers = [
-		{
-			id: 1,
-			name: "Tech Events Inc.",
-			location: "San Francisco, CA",
-			tag: "Technology",
-			eventsCount: "12 Events",
-			rating: 4.8,
-			image: "/images/companyImages/Company_A.jpg",
-			featured: true,
-			bio: "Leading technology event organiser specializing in conferences, workshops, and networking events for tech professionals.",
-			socialMedia: {
-				twitter: "@techevents",
-				linkedin: "techevents",
-				website: "www.techevents.com"
-			},
-			contact: {
-				email: "info@techevents.com",
-				phone: "+1 (555) 123-4567"
-			},
-			tags: ["Technology", "Networking", "Professional"]
-		},
-		{
-			id: 2,
-			name: "Music Events Co.",
-			location: "Austin, TX",
-			tag: "Music",
-			eventsCount: "24 Events",
-			rating: 4.6,
-			image: "/images/companyImages/Company_B.jpg",
-			featured: true,
-			bio: "Creating unforgettable music experiences from intimate venues to large-scale festivals across the country.",
-			socialMedia: {
-				twitter: "@musiceventsco",
-				instagram: "musiceventsco",
-				website: "www.musiceventsco.com"
-			},
-			contact: {
-				email: "bookings@musiceventsco.com",
-				phone: "+1 (555) 987-6543"
-			},
-			tags: ["Music", "Entertainment", "Festivals"]
-		},
-		{
-			id: 3,
-			name: "Mentor Wise",
-			location: "London, UK",
-			tag: "Education",
-			eventsCount: "8 Events",
-			rating: 4.9,
-			image: "/images/companyImages/MentorWise.png",
-			featured: false,
-			bio: "Empowering the next generation through mentorship programs, workshops, and community engagement to foster personal and professional growth.",
-			socialMedia: {
-				instagram: "mentorwise",
-				facebook: "mentorwise",
-				website: "www.mentor.org.uk"
-			},
-			contact: {
-				email: "info@mentorwise.org",
-				phone: "+1 (555) 456-7890"
-			},
-			tags: ["Art", "Culture", "Exhibition"]
-		},
-		{
-			id: 4,
-			name: "Sohbet Society",
-			location: "Istanbul, Turkey", 
-			tag: "Cultural",
-			eventsCount: "15 Events",
-			rating: 4.7,
-			image: "/images/companyImages/SohbetSociety.png",
-			featured: true,
-			bio: "Bringing people together through cultural exchange, conversation, and community-building events that celebrate diversity and heritage.",
-			socialMedia: {
-				twitter: "@sohbetsociety",
-				instagram: "sohbetsociety",
-				website: "www.sohbetsociety.org"
-			},
-			contact: {
-				email: "connect@sohbetsociety.org",
-				phone: "+90 (212) 555-1234"
-			},
-			tags: ["Cultural", "Community", "Education"]
-		},
-		{
-			id: 5,
-			name: "Sports United",
-			location: "Chicago, IL",
-			tag: "Sports",
-			eventsCount: "20 Events",
-			rating: 4.5,
-			image: "/images/companyImages/SportsUnited.png",
-			featured: false,
-			bio: "Uniting communities through sports events, tournaments, and fitness challenges for all skill levels and ages.",
-			socialMedia: {
-				twitter: "@sportsunited",
-				instagram: "sportsunited",
-				website: "www.sportsunited.com"
-			},
-			contact: {
-				email: "info@sportsunited.com",
-				phone: "+1 (312) 555-7890"
-			},
-			tags: ["Sports", "Community", "Health"]
-		},
-		{
-			id: 6,
-			name: "Foodie Festivals",
-			location: "New York, NY",
-			tag: "Food & Drink",
-			eventsCount: "30 Events",
-			rating: 4.9,
-			image: "/images/companyImages/FoodieFestivals.png",
-			featured: true,
-			bio: "Curating exceptional culinary experiences through food festivals, tasting events, and cooking workshops.",
-			socialMedia: {
-				twitter: "@foodiefests",
-				instagram: "foodiefestivals",
-				website: "www.foodiefestivals.com"
-			},
-			contact: {
-				email: "taste@foodiefestivals.com",
-				phone: "+1 (212) 555-3456"
-			},
-			tags: ["Food & Drink", "Culture", "Entertainment"]
-		},
-		{
-			id: 7,
-			name: "Art Collective",
-			location: "Los Angeles, CA",
-			tag: "Art",
-			eventsCount: "18 Events",
-			rating: 4.6,
-			image: "/images/companyImages/ArtCollective.png",
-			featured: false,
-			bio: "Supporting emerging artists through exhibitions, galleries, and interactive art experiences.",
-			socialMedia: {
-				twitter: "@artcollective",
-				instagram: "artcollectivela",
-				website: "www.artcollective.org"
-			},
-			contact: {
-				email: "create@artcollective.org",
-				phone: "+1 (323) 555-9012"
-			},
-			tags: ["Art", "Culture", "Entertainment"]
-		},
-		{
-			id: 8,
-			name: "Business Summit",
-			location: "London, UK",
-			tag: "Business",
-			eventsCount: "25 Events",
-			rating: 4.8,
-			image: "/images/companyImages/BusinessSummit.png",
-			featured: true,
-			bio: "Connecting industry leaders through professional conferences, networking events, and business workshops.",
-			socialMedia: {
-				twitter: "@bizsummit",
-				linkedin: "businesssummit",
-				website: "www.businesssummit.co.uk"
-			},
-			contact: {
-				email: "contact@businesssummit.co.uk",
-				phone: "+44 20 7123 4567"
-			},
-			tags: ["Business", "Professional", "Networking"]
-		},
-		{
-			id: 9,
-			name: "Green Events",
-			location: "San Francisco, CA",
-			tag: "Environment",
-			eventsCount: "22 Events",
-			rating: 4.7,
-			image: "/images/companyImages/GreenEvents.png",
-			featured: false,
-			bio: "Promoting sustainability through eco-friendly events, environmental workshops, and green technology showcases.",
-			socialMedia: {
-				twitter: "@greenevents",
-				instagram: "greeneventssf",
-				website: "www.greenevents.org"
-			},
-			contact: {
-				email: "sustainable@greenevents.org",
-				phone: "+1 (415) 555-6789"
-			},
-			tags: ["Environment", "Technology", "Education"]
+		if (searchQuery.trim()) {
+			const query = searchQuery.toLowerCase();
+			filtered = filtered.filter(
+				(o) =>
+					o.name.toLowerCase().includes(query) ||
+					o.location.toLowerCase().includes(query) ||
+					o.tag.toLowerCase().includes(query),
+			);
 		}
-	];
 
-	// Get all unique tags
-	//const allTags = $derived([...new Set(organisers.flatMap(organiser => organiser.tags || []))]);
+		if (selectedTags.length > 0) {
+			filtered = filtered.filter((o) =>
+				selectedTags.some((tag) => o.tags.includes(tag)),
+			);
+		}
 
-	// Filter organisers based on search query and selected tags
-	// Update the filter logic to handle multiple locations
-	const filteredOrganisers = $derived(
-		organisers
-			.filter(organiser => {
-			const matchesSearch = searchQuery === "" || 
-				organiser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				organiser.location.toLowerCase().includes(searchQuery.toLowerCase());
+		if (selectedLocations.length > 0) {
+			filtered = filtered.filter((o) =>
+				selectedLocations.some((loc) => o.location.includes(loc)),
+			);
+		}
 
-			const matchesTags = selectedTags.length === 0 ||
-				selectedTags.some(tag => organiser.tags?.includes(tag));
-
-			// Updated location filter logic
-			const matchesLocation = selectedLocations.length === 0 ||
-				selectedLocations.some(loc => organiser.location.includes(loc));
-
-			return matchesSearch && matchesTags && matchesLocation;
-			})
-			.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)) // Featured come first
+		return filtered.sort(
+			(a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0),
 		);
+	});
 
+	const paginatedOrganisers = $derived.by(() =>
+		filteredOrganisers.slice(
+			(currentPage - 1) * itemsPerPage,
+			currentPage * itemsPerPage,
+		),
+	);
 
-	// Reset to page 1 when filters change
+	const stats = $derived.by(() => ({
+		total: organisers.length,
+		featured: organisers.filter((o) => o.featured).length,
+		avgRating: (
+			organisers.reduce((acc, o) => acc + o.rating, 0) / organisers.length
+		).toFixed(1),
+	}));
+
+	// Effects
 	$effect(() => {
-		// Watch for changes in filters
 		searchQuery;
 		selectedTags;
 		selectedLocations;
-		
-		// Reset to page 1 when any filter changes
+		viewMode;
 		currentPage = 1;
 	});
 
-    // Derived store for paginated organisers (fix variable name)
-    const paginatedOrganisers = $derived(
-		filteredOrganisers.slice(
-			(currentPage - 1) * itemsPerPage, currentPage * itemsPerPage
-		)
-	);
-
-
-
-	function toggleCategory(tag) {
-		if (selectedTags.includes(tag)) {
-			selectedTags = selectedTags.filter(c => c !== tag);
-		} else {
-			selectedTags = [...selectedTags, tag];
-		}
-	}
-
-	function clearAllTags() {
-		selectedTags = [];
-		activeDropdown = null;
-	}
-
-	function selectLocation(location) {
-		console.log("Selected location:", location);
-		activeDropdown = null;
-	}
-
-	// Modified function to handle dropdown coordination
+	// Functions
 	function handleDropdownToggle(dropdownType) {
 		if (activeDropdown === dropdownType) {
 			activeDropdown = null;
@@ -305,160 +117,530 @@
 		}
 	}
 
-	// Close all dropdowns
-	function closeAllDropdowns() {
+	function handleClickOutside(event) {
+		if (!event.target.closest(".dropdown-container")) {
+			activeDropdown = null;
+		}
+	}
+
+	function clearFilters() {
+		searchQuery = "";
+		selectedTags = [];
+		selectedLocations = [];
 		activeDropdown = null;
 	}
 
-	// Configuration variables for number of options to show
-	const maxTagsToShow = 6;
-	const maxLocationsToShow = 6;
-
-	// Function to calculate most popular options based on frequency
-	function getMostPopularOptions(data, field, maxCount = 6) {
-		const frequency = {};
-		
-		// Count frequency of each option
-		data.forEach(item => {
-			if (field === 'tags' && item.tags && Array.isArray(item.tags)) {
-				item.tags.forEach(tag => {
-					frequency[tag] = (frequency[tag] || 0) + 1;
-				});
-			} else if (field === 'location' && item.location) {
-				frequency[item.location] = (frequency[item.location] || 0) + 1;
-			}
-		});
-		
-		// Sort by frequency and return top X
-		return Object.entries(frequency)
-			.sort(([,a], [,b]) => Number(b) - Number(a))
-			.slice(0, maxCount)
-			.map(([option]) => option);
-	}
-
-	// Replace static options with dynamic popular options
-	const locationOptions = getMostPopularOptions(organisers, 'location', maxLocationsToShow);
-	const tagOptions = getMostPopularOptions(organisers, 'tags', maxTagsToShow);
-
-	// Modified click outside handler
-	function handleClickOutside(event) {
-		if (!event.target.closest('.dropdown-container')) {
-			closeAllDropdowns();
-		}
+	function handleViewDetails(organiser: Organiser) {
+		selectedOrganiser = organiser;
+		isModalOpen = true;
 	}
 </script>
 
+<svelte:head>
+	<title>Organisers - Evento</title>
+</svelte:head>
+
 <svelte:window onclick={handleClickOutside} />
 
-<div class="p-6 space-y-6">
-	<!-- Page title -->
-	<h1 class="text-3xl font-bold tracking-tight">Organisers</h1>
-
-	<!-- Search bar -->
-	<AppSearchBar
-		bind:value={searchQuery}
-		placeholder="Search organisers by name or location"
-		showIcon={true}
-	/>
-
-	<!-- Filters -->
-	<div class="flex flex-wrap gap-4">
-		<!-- Location Dropdown -->
-		<div class="dropdown-container">
-			<AppFilterDropdown
-				bind:selectedValues={selectedLocations}
-				options={locationOptions}
-				label="Location"
-				icon={MapPin}
-				isOpen={activeDropdown === 'location'}
-				onToggle={() => handleDropdownToggle('location')}
-			/>
-		</div>
-
-		<!-- Tags Dropdown -->
-		<div class="dropdown-container">
-			<AppFilterDropdown
-				bind:selectedValues={selectedTags}
-				options={tagOptions}
-				label="Tags"
-				icon={TagIcon}
-				isOpen={activeDropdown === 'tags'}
-				onToggle={() => handleDropdownToggle('tags')}
-			/>
-		</div>
-	</div>
-
-	<!-- Results Info -->
-  <div class="flex items-center justify-between text-sm text-gray-600">
-    <span>
-      Showing {paginatedOrganisers.length} of {filteredOrganisers.length} organisers
-    </span>
-    <span>
-      Page {currentPage} of {Math.ceil(filteredOrganisers.length / itemsPerPage)}
-    </span>
-  </div>
-
-	<!-- Organiser cards (including featured) -->
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-		{#each paginatedOrganisers as organiser (organiser.id)}
-			<div 
-				animate:flip={{duration: 500}}
-                in:fade={{duration: 300}}
-			>
-				<AppOrganiserCard
-					{organiser}
-					featured={organiser.featured}
-					onclick={() => handleViewDetails(organiser)}
-				/>
+<div class="min-h-screen bg-gray-50/50 p-6 dark:bg-gray-950">
+	<div class="mx-auto max-w-7xl space-y-8">
+		<!-- Header Section -->
+		<div
+			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div>
+				<h1
+					class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+				>
+					Organisers
+				</h1>
+				<p class="mt-1 text-gray-500 dark:text-gray-400">
+					Discover top event planners and agencies
+				</p>
 			</div>
-		{/each}
-	</div>
-	<!-- No results message -->
-	{#if filteredOrganisers.length === 0}
-		<div class="text-center py-12">
-			<p class="text-gray-500">No organisers found with selected filters.</p>
-			<button onclick={clearAllTags} class="text-primary hover:underline mt-2">
-				Clear filters
-			</button>
+			<div class="flex gap-3">
+				<Button
+					variant="outline"
+					class="hidden sm:flex"
+					disabled={false}
+				>
+					<Download class="mr-2 h-4 w-4" />
+					Export
+				</Button>
+				<Button
+					onclick={() => goto("/organisers/create")}
+					disabled={false}
+					class="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+				>
+					<Plus class="mr-2 h-4 w-4" />
+					Add Organiser
+				</Button>
+			</div>
 		</div>
-	{/if}
 
-	<Pagination.Root
-		class=""
-		count={filteredOrganisers.length} 
-		perPage={itemsPerPage}
-		bind:page={currentPage}
-	>
-		{#snippet children({ pages, currentPage: paginationCurrentPage })}
-		  <Pagination.Content class="">
-			<Pagination.Item>
-			  <Pagination.PrevButton class="" children={null}/>
-			</Pagination.Item>
-			{#each pages as page (page.key)}
-			  {#if page.type === "ellipsis"}
-				<Pagination.Item class="bg-primary text-white">
-				  <Pagination.Ellipsis class=""/>
-				</Pagination.Item>
-			  {:else}
-				<Pagination.Item>
-				  <Pagination.Link class="" {page} isActive={paginationCurrentPage === page.value}>
-					{page.value}
-				  </Pagination.Link>
-				</Pagination.Item>
-			  {/if}
-			{/each}
-			<Pagination.Item>
-			  <Pagination.NextButton class="" children={null}/>
-			</Pagination.Item>
-		  </Pagination.Content>
-		{/snippet}
-	</Pagination.Root>
+		<!-- Stats Overview -->
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+			<div
+				class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800"
+			>
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-gray-500">
+							Total Partners
+						</p>
+						<p class="mt-2 text-3xl font-bold text-gray-900">
+							{stats.total}
+						</p>
+					</div>
+					<div
+						class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800"
+					>
+						<Building2 class="h-6 w-6 text-gray-600" />
+					</div>
+				</div>
+			</div>
 
-	<!-- Modal -->
-	{#if selectedOrganiser}
-		<AppOrganiserDetailsModal
-			organiser={selectedOrganiser}
-			bind:open={isModalOpen}
-		/>
-	{/if}
+			<div
+				class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800"
+			>
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-gray-500">
+							Featured Organisers
+						</p>
+						<p class="mt-2 text-3xl font-bold text-gray-900">
+							{stats.featured}
+						</p>
+					</div>
+					<div
+						class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20"
+					>
+						<Award class="h-6 w-6 text-amber-600" />
+					</div>
+				</div>
+			</div>
+
+			<div
+				class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800"
+			>
+				<div class="flex items-center justify-between">
+					<div>
+						<p class="text-sm font-medium text-gray-500">
+							Avg. Rating
+						</p>
+						<div class="mt-2 flex items-baseline gap-2">
+							<p class="text-3xl font-bold text-gray-900">
+								{stats.avgRating}
+							</p>
+							<div class="flex text-amber-400">
+								<Star class="h-4 w-4 fill-current" />
+								<Star class="h-4 w-4 fill-current" />
+								<Star class="h-4 w-4 fill-current" />
+								<Star class="h-4 w-4 fill-current" />
+								<Star class="h-4 w-4 fill-current opacity-50" />
+							</div>
+						</div>
+					</div>
+					<div
+						class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20"
+					>
+						<TrendingUp class="h-6 w-6 text-blue-600" />
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Search & Filter Section -->
+		<div
+			class="relative z-50 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800"
+		>
+			<div class="space-y-4">
+				<div class="relative">
+					<AppSearchBar
+						bind:value={searchQuery}
+						placeholder="Search by name, location, or tag..."
+						showIcon={true}
+					/>
+				</div>
+
+				<div class="flex flex-wrap items-center justify-between gap-4">
+					<div class="flex flex-wrap gap-3">
+						<div class="relative dropdown-container z-30">
+							<AppFilterDropdown
+								bind:selectedValues={selectedLocations}
+								options={uniqueLocations}
+								allOptions={uniqueLocations}
+								label="Location"
+								icon={MapPin}
+								isOpen={activeDropdown === "location"}
+								onToggle={() =>
+									handleDropdownToggle("location")}
+							/>
+						</div>
+
+						<div class="relative dropdown-container z-20">
+							<AppFilterDropdown
+								bind:selectedValues={selectedTags}
+								options={uniqueTags}
+								allOptions={uniqueTags}
+								label="Tags"
+								icon={Tag}
+								isOpen={activeDropdown === "tags"}
+								onToggle={() => handleDropdownToggle("tags")}
+							/>
+						</div>
+
+						{#if searchQuery || selectedTags.length > 0 || selectedLocations.length > 0}
+							<Button
+								variant="ghost"
+								disabled={false}
+								onclick={clearFilters}
+								class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+							>
+								Clear Filters
+							</Button>
+						{/if}
+					</div>
+
+					<div
+						class="flex items-center gap-2 border-l pl-4 border-gray-200"
+					>
+						<span class="text-sm text-gray-500 mr-1">View:</span>
+						<Button
+							variant={viewMode === "grid"
+								? "secondary"
+								: "ghost"}
+							size="icon"
+							onclick={() => (viewMode = "grid")}
+							class="h-9 w-9"
+							title="Grid View"
+						>
+							<LayoutGrid class="h-4 w-4" />
+						</Button>
+						<Button
+							variant={viewMode === "list"
+								? "secondary"
+								: "ghost"}
+							size="icon"
+							onclick={() => (viewMode = "list")}
+							class="h-9 w-9"
+							title="List View"
+						>
+							<List class="h-4 w-4" />
+						</Button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Content -->
+		<div class="space-y-6">
+			<div
+				class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400"
+			>
+				<span
+					>Showing {paginatedOrganisers.length} of {filteredOrganisers.length}
+					organisers</span
+				>
+				<span
+					>Page {currentPage} of {Math.ceil(
+						filteredOrganisers.length / itemsPerPage,
+					)}</span
+				>
+			</div>
+
+			{#if viewMode === "grid"}
+				<!-- Grid View -->
+				<div
+					class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+				>
+					{#each paginatedOrganisers as organiser (organiser.id)}
+						<div
+							animate:flip={{ duration: 400 }}
+							in:fade={{ duration: 300 }}
+						>
+							<div
+								class="group relative flex flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-gray-900 dark:ring-gray-800 h-full"
+							>
+								<!-- Cover Image Stub -->
+								<div
+									class="h-24 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 relative"
+								>
+									{#if organiser.featured}
+										<div
+											class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold text-amber-600 flex items-center shadow-sm"
+										>
+											<Award
+												class="w-3 h-3 mr-1 fill-amber-600"
+											/> Featured
+										</div>
+									{/if}
+								</div>
+
+								<div class="px-6 pb-6 flex-1 flex flex-col">
+									<!-- Logo/Image -->
+									<div class="relative -mt-10 mb-4">
+										<div
+											class="h-20 w-20 rounded-xl bg-white p-1 ring-4 ring-white shadow-sm dark:bg-gray-800 dark:ring-gray-900"
+										>
+											<div
+												class="h-full w-full rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden"
+											>
+												{#if organiser.image && !organiser.image.includes("Company")}
+													<img
+														src={organiser.image}
+														alt={organiser.name}
+														class="h-full w-full object-cover"
+													/>
+												{:else}
+													<Building2
+														class="h-8 w-8 text-gray-300"
+													/>
+												{/if}
+											</div>
+										</div>
+									</div>
+
+									<div class="mb-4">
+										<h3
+											class="font-bold text-gray-900 text-lg mb-1 dark:text-gray-100"
+										>
+											{organiser.name}
+										</h3>
+										<p
+											class="text-sm text-gray-500 line-clamp-2"
+										>
+											{organiser.bio}
+										</p>
+									</div>
+
+									<div class="space-y-2 mb-6 flex-1">
+										<div
+											class="flex items-center text-sm text-gray-600"
+										>
+											<MapPin
+												class="h-4 w-4 mr-2 text-gray-400"
+											/>
+											{organiser.location}
+										</div>
+										<div
+											class="flex items-center text-sm text-gray-600"
+										>
+											<Briefcase
+												class="h-4 w-4 mr-2 text-gray-400"
+											/>
+											{organiser.eventsCount}
+										</div>
+									</div>
+
+									<div
+										class="flex flex-wrap gap-2 pt-4 border-t border-gray-100 dark:border-gray-800"
+									>
+										{#each organiser.tags.slice(0, 3) as tag}
+											<Badge
+												variant="secondary"
+												class="bg-gray-100 text-gray-600 hover:bg-gray-200 border-0"
+												>{tag}</Badge
+											>
+										{/each}
+									</div>
+
+									<div
+										class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between dark:border-gray-800"
+									>
+										<div
+											class="flex items-center text-sm font-medium text-gray-900"
+										>
+											<Star
+												class="h-4 w-4 text-amber-400 fill-amber-400 mr-1"
+											/>
+											{organiser.rating}
+										</div>
+
+										<button
+											onclick={() =>
+												handleViewDetails(organiser)}
+											class="text-sm font-semibold text-gray-900 hover:text-gray-700 flex items-center gap-1 group-hover/btn:underline"
+										>
+											View Profile <ArrowUpRight
+												class="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+											/>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<!-- List View -->
+				<div
+					class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800"
+				>
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm">
+							<thead
+								class="bg-gray-50 text-gray-500 font-medium dark:bg-gray-800/50"
+							>
+								<tr>
+									<th class="px-6 py-4">Organiser</th>
+									<th class="px-6 py-4">Location</th>
+									<th class="px-6 py-4">Events</th>
+									<th class="px-6 py-4">Tags</th>
+									<th class="px-6 py-4">Rating</th>
+									<th class="px-6 py-4 text-right">Action</th>
+								</tr>
+							</thead>
+							<tbody
+								class="divide-y divide-gray-100 dark:divide-gray-800"
+							>
+								{#each paginatedOrganisers as organiser (organiser.id)}
+									<tr
+										class="hover:bg-gray-50/50 transition-colors group"
+									>
+										<td class="px-6 py-4">
+											<div
+												class="flex items-center gap-3"
+											>
+												<div
+													class="h-10 w-10 shrink-0 rounded-lg bg-gray-100 flex items-center justify-center font-bold text-gray-600 overflow-hidden"
+												>
+													{#if organiser.image && !organiser.image.includes("Company")}
+														<img
+															src={organiser.image}
+															alt={organiser.name}
+															class="h-full w-full object-cover"
+														/>
+													{:else}
+														<Building2
+															class="h-5 w-5 text-gray-400"
+														/>
+													{/if}
+												</div>
+												<div>
+													<p
+														class="font-medium text-gray-900 flex items-center gap-2"
+													>
+														{organiser.name}
+														{#if organiser.featured}
+															<Award
+																class="h-3 w-3 text-amber-500"
+															/>
+														{/if}
+													</p>
+													<p
+														class="text-xs text-gray-500 truncate max-w-[200px]"
+													>
+														{organiser.contact
+															.email}
+													</p>
+												</div>
+											</div>
+										</td>
+										<td class="px-6 py-4 text-gray-600"
+											>{organiser.location}</td
+										>
+										<td class="px-6 py-4 text-gray-600"
+											>{organiser.eventsCount}</td
+										>
+										<td class="px-6 py-4">
+											<div class="flex gap-1 flex-wrap">
+												{#each organiser.tags.slice(0, 2) as tag}
+													<Badge
+														variant="outline"
+														class="text-[10px] px-1 py-0 h-5 border-gray-200 text-gray-500"
+														>{tag}</Badge
+													>
+												{/each}
+											</div>
+										</td>
+										<td class="px-6 py-4">
+											<div
+												class="flex items-center text-gray-900 font-medium"
+											>
+												<Star
+													class="h-3 w-3 text-amber-400 fill-amber-400 mr-1"
+												/>
+												{organiser.rating}
+											</div>
+										</td>
+										<td class="px-6 py-4 text-right">
+											<Button
+												variant="ghost"
+												size="sm"
+												onclick={() =>
+													handleViewDetails(
+														organiser,
+													)}
+											>
+												View
+											</Button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Pagination -->
+			{#if filteredOrganisers.length > 0}
+				<div class="flex justify-center pt-8">
+					<Pagination.Root
+						count={filteredOrganisers.length}
+						perPage={itemsPerPage}
+						bind:page={currentPage}
+						class=""
+					>
+						{#snippet children({
+							pages,
+							currentPage: paginationCurrentPage,
+						})}
+							<Pagination.Content class="">
+								<Pagination.Item class="">
+									<Pagination.PrevButton
+										children={null}
+										class=""
+									/>
+								</Pagination.Item>
+								{#each pages as page (page.key)}
+									{#if page.type === "ellipsis"}
+										<Pagination.Item class="">
+											<Pagination.Ellipsis class="" />
+										</Pagination.Item>
+									{:else}
+										<Pagination.Item class="">
+											<Pagination.Link
+												{page}
+												isActive={paginationCurrentPage ===
+													page.value}
+												class=""
+											>
+												{page.value}
+											</Pagination.Link>
+										</Pagination.Item>
+									{/if}
+								{/each}
+								<Pagination.Item class="">
+									<Pagination.NextButton
+										children={null}
+										class=""
+									/>
+								</Pagination.Item>
+							</Pagination.Content>
+						{/snippet}
+					</Pagination.Root>
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>
+
+<!-- Organiser Details Modal -->
+{#if selectedOrganiser}
+	<AppOrganiserDetailsModal
+		organiser={selectedOrganiser}
+		bind:open={isModalOpen}
+	/>
+{/if}

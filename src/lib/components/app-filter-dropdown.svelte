@@ -3,7 +3,7 @@
     import { Badge } from "$lib/components/ui/badge";
     import { X, Search } from "lucide-svelte";
     import { MapPin, User, User2, Tag } from "@lucide/svelte";
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -15,30 +15,30 @@
         icon = null,
         class: className = "",
         isOpen = $bindable(false),
-        onToggle = null
+        onToggle = null,
     } = $props();
 
     // Add search state
     let searchQuery = $state("");
-    let searchInputRef;
+    let searchInputRef = $state();
 
     // Use allOptions for searching if provided, otherwise fall back to options
     const searchableOptions = allOptions.length > 0 ? allOptions : options;
 
     // Filtered options based on search query - FIXED: removed function call
     const filteredOptions = $derived(
-        searchQuery.trim() === "" 
+        searchQuery.trim() === ""
             ? options // When no search query, show the limited popular options
-            : searchableOptions.filter(option => 
-                option.toLowerCase().includes(searchQuery.toLowerCase())
-            ) // When searching, search through ALL available options
+            : searchableOptions.filter((option) =>
+                  option.toLowerCase().includes(searchQuery.toLowerCase()),
+              ), // When searching, search through ALL available options
     );
 
     function handleToggle() {
         isOpen = !isOpen;
         if (onToggle) onToggle();
-        dispatch('toggle', { isOpen });
-        
+        dispatch("toggle", { isOpen });
+
         // Focus search input when dropdown opens
         if (isOpen) {
             setTimeout(() => {
@@ -54,24 +54,24 @@
 
     function toggleOption(option) {
         if (selectedValues.includes(option)) {
-            selectedValues = selectedValues.filter(v => v !== option);
+            selectedValues = selectedValues.filter((v) => v !== option);
         } else {
             selectedValues = [...selectedValues, option];
         }
-        dispatch('change', { selectedValues });
+        dispatch("change", { selectedValues });
     }
 
     function removeValue(valueToRemove) {
-        selectedValues = selectedValues.filter(v => v !== valueToRemove);
-        dispatch('change', { selectedValues });
+        selectedValues = selectedValues.filter((v) => v !== valueToRemove);
+        dispatch("change", { selectedValues });
     }
 
     function clearAllValues() {
         selectedValues = [];
         isOpen = false;
         searchQuery = "";
-        dispatch('change', { selectedValues });
-        dispatch('close');
+        dispatch("change", { selectedValues });
+        dispatch("close");
     }
 
     function clearSearch() {
@@ -82,11 +82,11 @@
     }
 
     function handleClickOutside(event) {
-        if (!event.target.closest('.dropdown-container')) {
+        if (!event.target.closest(".dropdown-container")) {
             if (isOpen) {
                 isOpen = false;
                 searchQuery = "";
-                dispatch('close');
+                dispatch("close");
             }
         }
     }
@@ -97,7 +97,7 @@
     }
 </script>
 
-<svelte:window onclick={handleClickOutside}/>
+<svelte:window onclick={handleClickOutside} />
 
 <div class="relative dropdown-container {className}">
     <Button
@@ -106,7 +106,7 @@
         class="flex items-center gap-2"
     >
         {#if icon}
-            {#if typeof icon === 'function'}
+            {#if typeof icon === "function"}
                 {@const Icon = icon}
                 <Icon class="h-4 w-4" />
             {:else}
@@ -115,17 +115,29 @@
         {/if}
         {label}
         {#if selectedValues.length > 0}
-            <Badge variant="secondary" class="ml-2">{selectedValues.length}</Badge>
+            <Badge variant="secondary" class="ml-2"
+                >{selectedValues.length}</Badge
+            >
         {/if}
-        <span class="transform transition-transform {isOpen ? 'rotate-180' : ''}">⌄</span>
+        <span
+            class="transform transition-transform {isOpen ? 'rotate-180' : ''}"
+            >⌄</span
+        >
     </Button>
 
     {#if isOpen}
-        <div class="absolute z-10 mt-2 w-64 rounded-md bg-white shadow-lg border border-gray-200">
+        <div
+            class="absolute z-10 mt-2 w-64 rounded-md bg-white shadow-lg border border-gray-200"
+        >
             <!-- Search Input -->
-            <div class="p-3 border-b border-gray-100" onclick={handleSearchClick}>
+            <div
+                class="p-3 border-b border-gray-100"
+                onclick={handleSearchClick}
+            >
                 <div class="relative">
-                    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search
+                        class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                    />
                     <input
                         bind:this={searchInputRef}
                         type="text"
@@ -157,12 +169,15 @@
                             >
                                 <span>{option}</span>
                                 {#if selectedValues.includes(option)}
-                                    <span class="text-sm text-green-600">✓</span>
+                                    <span class="text-sm text-green-600">✓</span
+                                    >
                                 {/if}
                             </button>
                         {/each}
                     {:else}
-                        <div class="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div
+                            class="px-4 py-3 text-sm text-gray-500 text-center"
+                        >
                             No {label.toLowerCase()} found matching "{searchQuery}"
                         </div>
                     {/if}

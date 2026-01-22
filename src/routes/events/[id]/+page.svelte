@@ -1,556 +1,522 @@
 <script lang="ts">
-    import { page } from '$app/stores';
-    import { goto } from '$app/navigation';
-    import { 
-      ArrowLeft, 
-      Calendar, 
-      MapPin, 
-      Users, 
-      Share2, 
-      Heart,
-      Star,
-      Clock,
-      DollarSign,
-      Tag,
-      MessageCircle,
-      User,
-      ExternalLink,
-      Download,
-      Bell,
-      CheckCircle
-    } from 'lucide-svelte';
-    import { Button } from '$lib/components/ui/button';
-    import { Badge } from '$lib/components/ui/badge';
-    import { fade, fly } from 'svelte/transition';
-  
-    // Event ID'yi URL'den al
-    const eventId = $page.params.id;
-  
-    // Mock data - gerçek uygulamada API'den gelecek
-    const events = [
-      {
-        id: 1,
-        title: "Tech Conference 2024",
-        date: "July 15, 2024",
-        time: "09:00 AM - 06:00 PM",
-        location: "San Francisco, CA",
-        address: "Moscone Center, 747 Howard St, San Francisco, CA 94103",
-        size: "Medium (101-1000)",
-        attendees: "500 Attendees",
-        maxAttendees: 1000,
-        status: "Scheduled",
-        image: "/images/eventImages/tech.jpg",
-        description: "Join us for the biggest tech conference of the year featuring industry leaders, innovative workshops, and networking opportunities. This comprehensive event will cover the latest trends in AI, blockchain, cloud computing, and software development.",
-        organizer: "Tech Events Inc.",
-        organizerImage: "/images/organizers/tech-events.jpg",
-        price: "$299",
-        originalPrice: "$399",
-        category: "Technology",
-        tags: ["Technology", "Conference", "Networking", "AI", "Blockchain"],
-        rating: 4.8,
-        reviews: 156,
-        highlights: [
-          "50+ Expert Speakers",
-          "Interactive Workshops",
-          "Networking Sessions",
-          "Free Lunch & Coffee",
-          "Certificate of Attendance"
-        ],
-        agenda: [
-          { time: "09:00 AM", title: "Registration & Welcome Coffee" },
-          { time: "10:00 AM", title: "Keynote: Future of AI" },
-          { time: "11:30 AM", title: "Workshop: Blockchain Basics" },
-          { time: "01:00 PM", title: "Lunch Break" },
-          { time: "02:00 PM", title: "Panel: Cloud Computing Trends" },
-          { time: "04:00 PM", title: "Networking Session" },
-          { time: "05:30 PM", title: "Closing Ceremony" }
-        ],
-        speakers: [
-          { name: "John Doe", title: "AI Expert", company: "TechCorp", image: "/images/speakers/john.jpg" },
-          { name: "Jane Smith", title: "Blockchain Developer", company: "CryptoInc", image: "/images/speakers/jane.jpg" },
-          { name: "Mike Johnson", title: "Cloud Architect", company: "CloudTech", image: "/images/speakers/mike.jpg" }
-        ],
-        comments: [
-          { 
-            id: 1, 
-            user: "Alice Cooper", 
-            avatar: "/images/users/alice.jpg",
-            rating: 5, 
-            comment: "Amazing event! Learned so much about AI trends.",
-            date: "2 days ago"
-          },
-          { 
-            id: 2, 
-            user: "Bob Wilson", 
-            avatar: "/images/users/bob.jpg",
-            rating: 4, 
-            comment: "Great networking opportunities and excellent speakers.",
-            date: "1 week ago"
-          }
-        ]
-      }
-      // Diğer eventler...
-    ];
-  
-    // Event'i bul
-    const event = events.find(e => e.id === parseInt(eventId)) || events[0];
-  
-    let isLiked = $state(false);
-    let isRegistered = $state(false);
-    let showAllComments = $state(false);
-    let newComment = $state('');
-    let userRating = $state(0);
-  
-    function toggleLike() {
-      isLiked = !isLiked;
+  import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
+  import {
+    ArrowLeft,
+    Calendar,
+    MapPin,
+    Users,
+    Share2,
+    Heart,
+    Star,
+    Clock,
+    DollarSign,
+    Tag,
+    MessageCircle,
+    User,
+    ExternalLink,
+    Download,
+    Bell,
+    CheckCircle2,
+    Trophy,
+  } from "lucide-svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { Badge } from "$lib/components/ui/badge";
+  import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+  } from "$lib/components/ui/card";
+  import { Separator } from "$lib/components/ui/separator";
+  import { fade, fly, slide } from "svelte/transition";
+  import { events } from "$lib/data/events";
+
+  // Event ID from URL
+  const eventId = $page.params.id;
+  const event = events.find((e) => e.id === parseInt(eventId)) || events[0];
+
+  let isLiked = $state(false);
+  let isRegistered = $state(false);
+  let showAllComments = $state(false);
+  let newComment = $state("");
+  let userRating = $state(0);
+
+  function toggleLike() {
+    isLiked = !isLiked;
+  }
+
+  function handleRegister() {
+    isRegistered = !isRegistered;
+  }
+
+  function shareEvent() {
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: event.description,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
     }
-  
-    function handleRegister() {
-      isRegistered = !isRegistered;
+  }
+
+  function goBack() {
+    goto("/events");
+  }
+
+  function submitComment() {
+    if (newComment.trim()) {
+      newComment = "";
+      userRating = 0;
     }
-  
-    function shareEvent() {
-      if (navigator.share) {
-        navigator.share({
-          title: event.title,
-          text: event.description,
-          url: window.location.href,
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.href);
-        // Toast notification burada olabilir
-      }
-    }
-  
-    function goBack() {
-      goto('/events');
-    }
-  
-    function submitComment() {
-      if (newComment.trim()) {
-        // Comment submit logic
-        newComment = '';
-        userRating = 0;
-      }
-    }
-  </script>
-  
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-    <!-- Header with Back Button -->
-    <div class="bg-white dark:bg-gray-900 shadow-sm border-b sticky top-0 z-10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-          <Button 
-            variant="ghost" 
-            onclick={goBack}
-            disabled={false}
-            class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+  }
+</script>
+
+<div class="min-h-screen bg-gray-50/50 pb-20 dark:bg-gray-950 -mx-4 -mt-4">
+  <!-- Immersive Hero Section -->
+  <div
+    class="relative h-[60vh] min-h-[500px] w-full overflow-hidden bg-gray-900"
+  >
+    <div
+      class="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 md:bg-fixed"
+      style="background-image: url('{event.image}'); filter: brightness(0.4) blur(0px);"
+    ></div>
+
+    <!-- Gradient Overlay -->
+    <div
+      class="absolute inset-0 z-10 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent"
+    ></div>
+
+    <!-- Hero Content -->
+    <div
+      class="relative z-20 mx-auto flex h-full max-w-7xl flex-col justify-end px-6 pb-12 sm:px-8 lg:px-10"
+    >
+      <div in:fly={{ y: 30, duration: 800, delay: 100 }} class="max-w-4xl">
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={goBack}
+          disabled={false}
+          class="mb-6 border-white/20 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
+        >
+          <ArrowLeft class="mr-2 h-4 w-4" />
+          Back to Events
+        </Button>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+          <Badge
+            variant="secondary"
+            class="bg-primary/20 text-primary-foreground backdrop-blur-md border-primary/20 hover:bg-primary/30 text-white"
+            href="#"
           >
-            <ArrowLeft class="w-4 h-4" />
-            Back to Events
-          </Button>
-          
-          <div class="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onclick={toggleLike}
-              disabled={false}
-              class="flex items-center gap-2 {isLiked ? 'text-red-500' : 'text-gray-500'}"
+            {event.category}
+          </Badge>
+          {#if event.status === "Scheduled"}
+            <Badge
+              variant="outline"
+              class="border-green-400/50 text-green-400 bg-green-400/10 backdrop-blur-md"
+              href="#"
             >
-              <Heart class="w-4 h-4 {isLiked ? 'fill-current' : ''}" />
-              {isLiked ? 'Liked' : 'Like'}
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onclick={shareEvent}
-              disabled={false}
-              class="flex items-center gap-2"
+              Open for Registration
+            </Badge>
+          {/if}
+        </div>
+
+        <h1
+          class="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:leading-tight"
+        >
+          {event.title}
+        </h1>
+
+        <div class="mt-6 flex flex-wrap items-center gap-6 text-gray-300">
+          <div class="flex items-center gap-2.5">
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm"
             >
-              <Share2 class="w-4 h-4" />
-              Share
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-8">
-          <!-- Hero Image & Title -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden" in:fade={{duration: 600}}>
-            <div class="relative h-96 overflow-hidden">
-              <img 
-                src={event.image} 
-                alt={event.title}
-                class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-              <div class="absolute bottom-6 left-6 right-6">
-                <div class="flex flex-wrap gap-2 mb-4">
-                  {#each event.tags as tag}
-                    <span class="bg-white/20 text-white backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
-                      {tag}
-                    </span>
-                  {/each}
-                </div>
-                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">{event.title}</h1>
-                <div class="flex items-center gap-4 text-white/90">
-                  <div class="flex items-center gap-1">
-                    <Star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span class="font-medium">{event.rating}</span>
-                    <span class="text-sm">({event.reviews} reviews)</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <Users class="w-4 h-4" />
-                    <span class="text-sm">{event.attendees}</span>
-                  </div>
-                </div>
-              </div>
+              <Calendar class="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p class="text-sm font-medium text-white">{event.date}</p>
+              <p class="text-xs text-gray-400">{event.time}</p>
             </div>
           </div>
-  
-          <!-- Event Details -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8" in:fly={{y: 50, duration: 600, delay: 200}}>
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Calendar class="w-6 h-6 text-blue-600" />
-              Event Details
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div class="space-y-4">
-                <div class="flex items-start gap-3">
-                  <Calendar class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <p class="font-medium">{event.date}</p>
-                    <p class="text-sm text-gray-500">{event.time}</p>
-                  </div>
-                </div>
-                
-                <div class="flex items-start gap-3">
-                  <MapPin class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <p class="font-medium">{event.location}</p>
-                    <p class="text-sm text-gray-500">{event.address}</p>
-                  </div>
-                </div>
-                
-                <div class="flex items-start gap-3">
-                  <Users class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <p class="font-medium">{event.size}</p>
-                    <p class="text-sm text-gray-500">{event.attendees} registered</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="space-y-4">
-                <div class="flex items-start gap-3">
-                  <DollarSign class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-2xl font-bold text-green-600">{event.price}</span>
-                      {#if event.originalPrice}
-                        <span class="text-sm text-gray-500 line-through">{event.originalPrice}</span>
-                      {/if}
-                    </div>
-                    <p class="text-sm text-gray-500">Early bird pricing</p>
-                  </div>
-                </div>
-                
-                <div class="flex items-start gap-3">
-                  <User class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <p class="font-medium">{event.organizer}</p>
-                    <p class="text-sm text-gray-500">Event Organizer</p>
-                  </div>
-                </div>
-                
-                <div class="flex items-start gap-3">
-                  <Tag class="w-5 h-5 text-gray-500 mt-1" />
-                  <div>
-                    <p class="font-medium">{event.category}</p>
-                    <p class="text-sm text-gray-500">Category</p>
-                  </div>
-                </div>
-              </div>
+
+          <div class="h-8 w-px bg-white/10 hidden sm:block"></div>
+
+          <div class="flex items-center gap-2.5">
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm"
+            >
+              <MapPin class="h-5 w-5 text-white" />
             </div>
-  
-            <!-- Description -->
-            <div class="border-t pt-6">
-              <h3 class="text-xl font-semibold mb-4">About This Event</h3>
-              <p class="text-gray-600 dark:text-gray-300 leading-relaxed">{event.description}</p>
-            </div>
-  
-            <!-- Highlights -->
-            <div class="border-t pt-6 mt-6">
-              <h3 class="text-xl font-semibold mb-4">Event Highlights</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {#each event.highlights as highlight}
-                  <div class="flex items-center gap-2">
-                    <CheckCircle class="w-5 h-5 text-green-500" />
-                    <span class="text-gray-600 dark:text-gray-300">{highlight}</span>
-                  </div>
-                {/each}
-              </div>
-            </div>
-          </div>
-  
-          <!-- Agenda -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8" in:fly={{y: 50, duration: 600, delay: 400}}>
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Clock class="w-6 h-6 text-purple-600" />
-              Event Agenda
-            </h2>
-            
-            <div class="space-y-4">
-              {#each event.agenda as item, index}
-                <div class="flex items-start gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div class="flex-shrink-0">
-                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                      <span class="text-purple-600 dark:text-purple-400 font-semibold text-sm">{index + 1}</span>
-                    </div>
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-1">
-                      <span class="text-sm font-medium text-purple-600 dark:text-purple-400">{item.time}</span>
-                    </div>
-                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{item.title}</h4>
-                  </div>
-                </div>
-              {/each}
-            </div>
-          </div>
-  
-          <!-- Speakers -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8" in:fly={{y: 50, duration: 600, delay: 600}}>
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Users class="w-6 h-6 text-orange-600" />
-              Featured Speakers
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {#each event.speakers as speaker}
-                <div class="text-center group">
-                  <div class="relative mb-4">
-                    <img 
-                      src={speaker.image} 
-                      alt={speaker.name}
-                      class="w-24 h-24 rounded-full mx-auto object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div class="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-                  <h4 class="font-semibold text-gray-900 dark:text-gray-100">{speaker.name}</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{speaker.title}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">{speaker.company}</p>
-                </div>
-              {/each}
-            </div>
-          </div>
-  
-          <!-- Comments & Reviews -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8" in:fly={{y: 50, duration: 600, delay: 800}}>
-            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-              <MessageCircle class="w-6 h-6 text-green-600" />
-              Reviews & Comments
-            </h2>
-  
-            <!-- Add Comment Form -->
-            <div class="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              <h3 class="font-semibold mb-4">Share your thoughts</h3>
-              <div class="space-y-4">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm">Your rating:</span>
-                  <div class="flex gap-1">
-                    {#each Array(5) as _, i}
-                      <button 
-                        onclick={() => userRating = i + 1}
-                        class="text-2xl {i < userRating ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors"
-                      >
-                        ★
-                      </button>
-                    {/each}
-                  </div>
-                </div>
-                <textarea 
-                  bind:value={newComment}
-                  placeholder="Write your review..."
-                  class="w-full p-3 border rounded-lg resize-none h-24 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                ></textarea>
-                <Button 
-                  onclick={submitComment} 
-                  disabled={false}
-                  class="bg-blue-600 hover:bg-blue-700"
-                >
-                  Submit Review
-                </Button>
-              </div>
-            </div>
-  
-            <!-- Comments List -->
-            <div class="space-y-6">
-              {#each event.comments.slice(0, showAllComments ? event.comments.length : 2) as comment}
-                <div class="flex gap-4">
-                  <!-- Avatar yerine gradient div -->
-                  <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                    {comment.user.charAt(0).toUpperCase()}
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                      <h4 class="font-semibold">{comment.user}</h4>
-                      <div class="flex gap-1">
-                        {#each Array(5) as _, i}
-                          <Star class="w-3 h-3 {i < comment.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}" />
-                        {/each}
-                      </div>
-                      <span class="text-sm text-gray-500">{comment.date}</span>
-                    </div>
-                    <p class="text-gray-600 dark:text-gray-300">{comment.comment}</p>
-                  </div>
-                </div>
-              {/each}
-              
-              {#if event.comments.length > 2}
-                <Button 
-                  variant="outline" 
-                  onclick={() => showAllComments = !showAllComments}
-                  disabled={false}
-                  class="w-full"
-                >
-                  {showAllComments ? 'Show Less' : `Show All ${event.comments.length} Reviews`}
-                </Button>
-              {/if}
-            </div>
-          </div>
-        </div>
-  
-        <!-- Sidebar -->
-        <div class="lg:col-span-1">
-          <div class="sticky top-24 space-y-6">
-            <!-- Registration Card -->
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6" in:fly={{x: 50, duration: 600, delay: 300}}>
-              <div class="text-center mb-6">
-                <div class="text-3xl font-bold text-green-600 mb-2">{event.price}</div>
-                {#if event.originalPrice}
-                  <div class="text-sm text-gray-500 line-through">{event.originalPrice}</div>
-                {/if}
-                <div class="text-sm text-gray-600 mt-1">per person</div>
-              </div>
-  
-              <div class="space-y-4 mb-6">
-                <div class="flex justify-between text-sm">
-                  <span>Available spots:</span>
-                  <span class="font-medium">{event.maxAttendees - parseInt(event.attendees)} left</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    class="bg-green-600 h-2 rounded-full transition-all duration-500" 
-                    style="width: {(parseInt(event.attendees) / event.maxAttendees) * 100}%"
-                  ></div>
-                </div>
-              </div>
-  
-              <Button 
-                onclick={handleRegister}
-                disabled={false}
-                class="w-full {isRegistered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-3 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
-              >
-                {isRegistered ? 'Registered ✓' : 'Register Now'}
-              </Button>
-  
-              <div class="flex gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={false}
-                  class="flex-1"
-                >
-                  <Bell class="w-4 h-4 mr-2" />
-                  Remind Me
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={false}
-                  class="flex-1"
-                >
-                  <Download class="w-4 h-4 mr-2" />
-                  Save Event
-                </Button>
-              </div>
-            </div>
-  
-            <!-- Event Stats -->
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6" in:fly={{x: 50, duration: 600, delay: 500}}>
-              <h3 class="font-semibold mb-4">Event Statistics</h3>
-              <div class="space-y-4">
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Registered</span>
-                  <span class="font-semibold">{event.attendees}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Capacity</span>
-                  <span class="font-semibold">{event.maxAttendees}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Rating</span>
-                  <span class="font-semibold flex items-center gap-1">
-                    <Star class="w-4 h-4 text-yellow-400 fill-current" />
-                    {event.rating}
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Reviews</span>
-                  <span class="font-semibold">{event.reviews}</span>
-                </div>
-              </div>
-            </div>
-  
-            <!-- Organizer Info -->
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6" in:fly={{x: 50, duration: 600, delay: 700}}>
-              <h3 class="font-semibold mb-4">Organizer</h3>
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {event.organizer.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h4 class="font-medium">{event.organizer}</h4>
-                  <p class="text-sm text-gray-500">Event Organizer</p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                disabled={false}
-                class="w-full"
-              >
-                <ExternalLink class="w-4 h-4 mr-2" />
-                View Profile
-              </Button>
-            </div>
-  
-            <!-- Map Preview -->
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6" in:fly={{x: 50, duration: 600, delay: 900}}>
-              <h3 class="font-semibold mb-4">Location</h3>
-              <div class="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 flex items-center justify-center">
-                <MapPin class="w-8 h-8 text-gray-400" />
-              </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{event.address}</p>
-              <Button 
-                variant="outline" 
-                disabled={false}
-                class="w-full"
-              >
-                <ExternalLink class="w-4 h-4 mr-2" />
-                View on Maps
-              </Button>
+            <div>
+              <p class="text-sm font-medium text-white">{event.location}</p>
+              <p class="text-xs text-gray-400 max-w-[200px] truncate">
+                {event.address}
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
+  <!-- Main Content Layout -->
+  <div class="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8 relative z-30">
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      <!-- Left Column (Detail Content) -->
+      <div class="lg:col-span-8 flex flex-col gap-8">
+        <!-- About Section Card -->
+        <div in:fly={{ y: 20, duration: 600, delay: 200 }}>
+          <Card
+            class="border-none shadow-xl shadow-gray-200/50 dark:shadow-none overflow-hidden"
+          >
+            <CardHeader class="pb-2">
+              <CardTitle class="text-2xl font-bold flex items-center gap-2">
+                About the Event
+              </CardTitle>
+            </CardHeader>
+            <CardContent class="">
+              <p
+                class="text-lg leading-relaxed text-gray-600 dark:text-gray-300"
+              >
+                {event.description}
+              </p>
+
+              <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {#each event.highlights as highlight}
+                  <div
+                    class="flex items-center gap-3 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50"
+                  >
+                    <div
+                      class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                    >
+                      <CheckCircle2 class="h-5 w-5" />
+                    </div>
+                    <span class="font-medium text-gray-700 dark:text-gray-200"
+                      >{highlight}</span
+                    >
+                  </div>
+                {/each}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Agenda Section -->
+        <div in:fly={{ y: 20, duration: 600, delay: 300 }}>
+          <Card
+            class="border-none shadow-xl shadow-gray-200/50 dark:shadow-none overflow-hidden"
+          >
+            <CardHeader class="">
+              <CardTitle class="text-2xl font-bold flex items-center gap-2">
+                <Clock class="h-6 w-6 text-primary" />
+                Event Schedule
+              </CardTitle>
+              <CardDescription class=""
+                >A detailed look at what's happening throughout the day.</CardDescription
+              >
+            </CardHeader>
+            <CardContent class="">
+              {#if event.agenda && event.agenda.length > 0}
+                <div
+                  class="space-y-6 relative ml-3 before:absolute before:left-[19px] before:top-2 before:bottom-0 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-800"
+                >
+                  {#each event.agenda as item, index}
+                    <div class="relative flex gap-6">
+                      <div class="flex-shrink-0">
+                        <div
+                          class="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-primary text-primary-foreground shadow-sm dark:border-gray-900"
+                        >
+                          <span class="text-xs font-bold">{index + 1}</span>
+                        </div>
+                      </div>
+                      <div
+                        class="flex-1 rounded-2xl bg-gray-50 p-5 transition-all hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+                      >
+                        <div class="mb-1 flex items-center justify-between">
+                          <span
+                            class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                          >
+                            {item.time}
+                          </span>
+                        </div>
+                        <h4
+                          class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                        >
+                          {item.title}
+                        </h4>
+                        {#if index === 1}
+                          <p
+                            class="mt-2 text-sm text-gray-500 dark:text-gray-400"
+                          >
+                            Join us for an inspiring opening keynote where we
+                            discuss the future of the industry.
+                          </p>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <div
+                  class="flex flex-col items-center justify-center py-10 text-center text-gray-500"
+                >
+                  <Calendar class="mb-3 h-10 w-10 opacity-20" />
+                  <p>Agenda details coming soon.</p>
+                </div>
+              {/if}
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Gallery / Speakers Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Speakers -->
+          <div in:fly={{ y: 20, duration: 600, delay: 400 }}>
+            <Card
+              class="border-none shadow-xl shadow-gray-200/50 dark:shadow-none overflow-hidden h-full"
+            >
+              <CardHeader class="">
+                <CardTitle class="flex items-center gap-2">
+                  <Users class="h-5 w-5 text-primary" />
+                  Speakers
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="">
+                <div class="space-y-4">
+                  {#each event.speakers as speaker}
+                    <div
+                      class="flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
+                      <img
+                        src={speaker.image}
+                        alt={speaker.name}
+                        class="h-14 w-14 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-800"
+                      />
+                      <div>
+                        <h4
+                          class="font-semibold text-gray-900 dark:text-gray-100"
+                        >
+                          {speaker.name}
+                        </h4>
+                        <p class="text-sm text-primary">{speaker.title}</p>
+                        <p class="text-xs text-gray-500">{speaker.company}</p>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <!-- Location / Map Placeholder -->
+          <div in:fly={{ y: 20, duration: 600, delay: 400 }}>
+            <Card
+              class="border-none shadow-xl shadow-gray-200/50 dark:shadow-none overflow-hidden h-full flex flex-col"
+            >
+              <CardHeader class="">
+                <CardTitle class="flex items-center gap-2">
+                  <MapPin class="h-5 w-5 text-primary" />
+                  Location
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="flex-1 min-h-[200px] relative p-0">
+                <!-- Map Placeholder -->
+                <div
+                  class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
+                >
+                  <div class="text-center p-6">
+                    <div
+                      class="bg-white dark:bg-gray-700 p-4 rounded-full shadow-lg inline-flex mb-3"
+                    >
+                      <MapPin class="h-8 w-8 text-primary" />
+                    </div>
+                    <p class="font-medium text-gray-900 dark:text-gray-100">
+                      {event.location}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {event.address}
+                    </p>
+                    <Button
+                      variant="link"
+                      class="mt-2 text-primary p-0 h-auto"
+                      disabled={false}>View on Google Maps</Button
+                    >
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column (Sticky Sidebar) -->
+      <div class="lg:col-span-4 relative">
+        <div class="sticky top-24 space-y-6">
+          <!-- Booking Card -->
+          <div in:fly={{ x: 20, duration: 600, delay: 500 }}>
+            <Card
+              class="overflow-hidden border-none shadow-2xl shadow-primary/5 dark:shadow-none ring-1 ring-gray-200 dark:ring-gray-800"
+            >
+              <div
+                class="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-primary to-purple-600"
+              ></div>
+              <CardHeader class="pb-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p
+                      class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      Total Price
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                      <span
+                        class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300"
+                      >
+                        {event.price}
+                      </span>
+                      {#if event.originalPrice}
+                        <span
+                          class="text-lg text-gray-400 line-through Decoration-gray-400"
+                          >{event.originalPrice}</span
+                        >
+                      {/if}
+                    </div>
+                  </div>
+                  <!-- Like Button -->
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onclick={toggleLike}
+                    disabled={false}
+                    class="rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 {isLiked
+                      ? 'text-red-500'
+                      : 'text-gray-400'}"
+                  >
+                    <Heart class="h-6 w-6 {isLiked ? 'fill-current' : ''}" />
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CardContent class="space-y-6">
+                <!-- Progress Bar -->
+                <div class="space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="font-medium text-gray-700 dark:text-gray-300"
+                      >Seats Available</span
+                    >
+                    <span class="text-primary font-bold"
+                      >{event.maxAttendees - parseInt(event.attendees)} left</span
+                    >
+                  </div>
+                  <div
+                    class="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800"
+                  >
+                    <div
+                      class="h-full rounded-full bg-gradient-to-r from-primary to-purple-600 transition-all duration-1000"
+                      style="width: {(parseInt(event.attendees) /
+                        event.maxAttendees) *
+                        100}%"
+                    ></div>
+                  </div>
+                  <p class="text-xs text-gray-500 text-right">
+                    {event.attendees} already joined
+                  </p>
+                </div>
+
+                <!-- Main Action -->
+                <Button
+                  onclick={handleRegister}
+                  disabled={false}
+                  class="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-95"
+                >
+                  {isRegistered ? "You are Registered!" : "Book Your Spot"}
+                </Button>
+
+                {#if isRegistered}
+                  <div
+                    class="flex items-center justify-center gap-2 text-sm text-green-600 font-medium"
+                    in:slide
+                  >
+                    <CheckCircle2 class="h-4 w-4" />
+                    Confirmation sent to your email
+                  </div>
+                {/if}
+
+                <Separator class="bg-gray-100 dark:bg-gray-800" />
+
+                <!-- Secondary Actions -->
+                <div class="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    class="w-full"
+                    onclick={shareEvent}
+                    disabled={false}
+                  >
+                    <Share2 class="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                  <Button variant="outline" class="w-full" disabled={false}>
+                    <Bell class="mr-2 h-4 w-4" />
+                    Remind
+                  </Button>
+                </div>
+
+                <p class="text-center text-xs text-gray-400">
+                  No-hassle refunds up to 24h before the event.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <!-- Organizer Card -->
+          <div in:fly={{ x: 20, duration: 600, delay: 600 }}>
+            <Card
+              class="border-none shadow-lg dark:shadow-none bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm"
+            >
+              <CardContent class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                  <div
+                    class="h-12 w-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 p-0.5"
+                  >
+                    <div
+                      class="h-full w-full rounded-full bg-white dark:bg-gray-900 border-2 border-transparent flex items-center justify-center overflow-hidden"
+                    >
+                      <span
+                        class="text-lg font-bold text-gray-700 dark:text-gray-200"
+                        >{event.organizer.charAt(0)}</span
+                      >
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900 dark:text-gray-100">
+                      {event.organizer}
+                    </h4>
+                    <div class="flex items-center text-xs text-gray-500 mt-0.5">
+                      <Star
+                        class="h-3 w-3 text-yellow-500 mr-1 fill-yellow-500"
+                      />
+                      <span>{event.rating} ({event.reviews} reviews)</span>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  class="w-full"
+                  disabled={false}
+                >
+                  Contact Organizer
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

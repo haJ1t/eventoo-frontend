@@ -1,7 +1,6 @@
-<script>
-  import { goto } from '$app/navigation';
+<script lang="ts">
+  import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button";
-  import { browser } from '$app/environment';
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { Badge } from "$lib/components/ui/badge";
@@ -12,198 +11,204 @@
     CardHeader,
     CardTitle,
   } from "$lib/components/ui/card";
-  import { ArrowLeft, Save, Plus, X, MapPin, Users, Building } from "lucide-svelte";
+  import {
+    ArrowLeft,
+    Save,
+    Plus,
+    X,
+    MapPin,
+    Users,
+    Building,
+    CheckCircle2,
+    DollarSign,
+  } from "lucide-svelte";
+  import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
 
   // Form data
-  let formData = {
-    name: '',
-    location: '',
-    capacity: '',
-    type: '',
-    description: '',
+  let formData = $state({
+    name: "",
+    location: "",
+    capacity: "",
+    type: "",
+    description: "",
     amenities: [],
-    pricePerHour: '',
-    contactEmail: '',
-    contactPhone: ''
-  };
+    pricePerHour: "",
+    contactEmail: "",
+    contactPhone: "",
+    image: "", // Placeholder for image logic
+  });
 
-  let newAmenity = '';
+  let newAmenity = $state("");
+  let isSubmitting = $state(false);
 
   // Available venue types
   const venueTypes = [
-    'Conference Hall',
-    'Wedding Venue',
-    'Party Hall',
-    'Corporate Space',
-    'Concert Hall',
-    'Exhibition Center',
-    'Outdoor Venue',
-    'Restaurant',
-    'Hotel Ballroom',
-    'Community Center'
+    "Conference Hall",
+    "Wedding Venue",
+    "Party Hall",
+    "Corporate Space",
+    "Concert Hall",
+    "Exhibition Center",
+    "Outdoor Venue",
+    "Restaurant",
+    "Hotel Ballroom",
+    "Community Center",
   ];
 
   // Common amenities suggestions
   const commonAmenities = [
-    'WiFi', 'Parking', 'Air Conditioning', 'Sound System', 
-    'Projector', 'Stage', 'Kitchen', 'Bar', 'Dance Floor',
-    'Outdoor Space', 'Wheelchair Access', 'Security'
+    "WiFi",
+    "Parking",
+    "Air Conditioning",
+    "Sound System",
+    "Projector",
+    "Stage",
+    "Kitchen",
+    "Bar",
+    "Dance Floor",
+    "Outdoor Space",
+    "Wheelchair Access",
+    "Security",
   ];
 
-  // Event handlers
-  const handleBackClick = () => {
-    console.log('Back button clicked');
-    goto('/venues');
-  };
+  function handleBackClick() {
+    goto("/venues");
+  }
 
-  const handleCancelClick = () => {
-    console.log('Cancel button clicked');
-    const hasChanges = Object.values(formData).some(value => 
-      Array.isArray(value) ? value.length > 0 : value.trim() !== ''
-    );
-    
-    if (hasChanges && !confirm('Are you sure you want to cancel? All changes will be lost.')) {
-      return;
+  function handleCancelClick() {
+    if (
+      Object.values(formData).some((v) =>
+        Array.isArray(v) ? v.length > 0 : v !== "",
+      )
+    ) {
+      if (
+        !confirm("Are you sure you want to cancel? All changes will be lost.")
+      )
+        return;
     }
-    
-    goto('/venues');
-  };
+    goto("/venues");
+  }
 
-  const handleSaveDraft = () => {
-    localStorage.setItem('venue_draft', JSON.stringify(formData));
-    alert('Draft saved!');
-  };
-
-  // Add amenity
   function addAmenity() {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      formData.amenities = [...formData.amenities, newAmenity.trim()];
-      newAmenity = '';
+    const trimmed = newAmenity.trim();
+    if (trimmed && !formData.amenities.includes(trimmed)) {
+      formData.amenities = [...formData.amenities, trimmed];
+      newAmenity = "";
     }
   }
 
-  // Add suggested amenity
-  function addSuggestedAmenity(amenity) {
+  function addSuggestedAmenity(amenity: string) {
     if (!formData.amenities.includes(amenity)) {
       formData.amenities = [...formData.amenities, amenity];
     }
   }
 
-  // Remove amenity
-  function removeAmenity(amenity) {
-    formData.amenities = formData.amenities.filter(a => a !== amenity);
+  function removeAmenity(amenity: string) {
+    formData.amenities = formData.amenities.filter((a) => a !== amenity);
   }
 
-  // Form validation
-  function validateForm() {
-    const errors = [];
-    
-    if (!formData.name.trim()) errors.push('Venue name is required');
-    if (!formData.location.trim()) errors.push('Location is required');
-    if (!formData.capacity || formData.capacity < 1) errors.push('Valid capacity is required');
-    if (!formData.type) errors.push('Venue type is required');
-    if (formData.contactEmail && !isValidEmail(formData.contactEmail)) {
-      errors.push('Valid email is required');
-    }
-    
-    return errors;
+  async function handleSubmit() {
+    isSubmitting = true;
+    // Simulate API call
+    setTimeout(() => {
+      isSubmitting = false;
+      goto("/venues");
+    }, 1000);
   }
 
-  function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  // Handle form submission
-  function handleSubmit() {
-    const errors = validateForm();
-    
-    if (errors.length > 0) {
-      alert('Please fix the following errors:\n' + errors.join('\n'));
-      return;
-    }
-
-    console.log('Venue data:', formData);
-    
-    // Here you would normally send to API
-    alert('Venue created successfully!');
-    goto('/venues');
-  }
-
-  // Load draft on component mount
-  function loadDraft() {
-    const draft = localStorage.getItem('venue_draft');
-    if (draft && confirm('Load saved draft?')) {
-      formData = JSON.parse(draft);
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addAmenity();
     }
   }
-
-  // Load draft when component mounts
-  import { onMount } from 'svelte';
-  onMount(() => {
-    loadDraft();
-  });
 </script>
 
 <svelte:head>
   <title>Add New Venue - Evento</title>
 </svelte:head>
 
-<div class="container mx-auto p-6 max-w-6xl">
-  <!-- Header -->
-  <div class="flex items-center justify-between mb-8">
-    <div class="flex items-center gap-4">
-      <!-- CUSTOM BUTTON - HTML ile yapılmış -->
-      <Button variant="ghost" size="sm" onclick={handleBackClick} class="h-9 w-9 p-0" disabled={false}>
-				<ArrowLeft class="w-4 h-4" />
-			</Button>
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight">Add New Venue</h1>
-        <p class="text-muted-foreground mt-1">
-          Create a new venue for hosting events
-        </p>
+<div class="min-h-screen bg-gray-50/50 p-6 dark:bg-gray-950">
+  <div class="mx-auto max-w-7xl" in:fade={{ duration: 300 }}>
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={handleBackClick}
+          class="h-9 w-9 p-0"
+          disabled={false}
+        >
+          <ArrowLeft class="h-4 w-4" />
+        </Button>
+        <div>
+          <h1
+            class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          >
+            Add New Venue
+          </h1>
+          <p class="mt-1 text-gray-500 dark:text-gray-400">
+            Create a new venue listing for hosting events
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <Button
+          variant="outline"
+          onclick={handleCancelClick}
+          disabled={isSubmitting}
+          class=""
+        >
+          Cancel
+        </Button>
+        <Button onclick={handleSubmit} disabled={isSubmitting} class="">
+          {#if isSubmitting}
+            Creating...
+          {:else}
+            <Save class="mr-2 h-4 w-4" />
+            Save Venue
+          {/if}
+        </Button>
       </div>
     </div>
-    <button 
-      class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-      on:click={handleSaveDraft}
-    >
-      Save Draft
-    </button>
-  </div>
 
-  <form on:submit|preventDefault={handleSubmit}>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <!-- Main Form -->
       <div class="lg:col-span-2 space-y-6">
-        
         <!-- Basic Information -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <Building class="h-5 w-5" />
+        <Card
+          class="border-none shadow-sm ring-1 ring-gray-200 dark:ring-gray-800"
+        >
+          <CardHeader class="">
+            <CardTitle class="flex items-center gap-2 text-xl">
+              <Building class="h-5 w-5 text-primary" />
               Basic Information
             </CardTitle>
-            <CardDescription>
-              Enter the essential details about your venue
+            <CardDescription class="">
+              Enter the essential details about your venue.
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-2">
-                <Label for="name">Venue Name *</Label>
+                <Label for="name" class="">Venue Name</Label>
                 <Input
                   id="name"
                   bind:value={formData.name}
                   placeholder="e.g., Grand Ballroom"
+                  class="bg-gray-50/50"
                   required
+                  type="text"
                 />
               </div>
               <div class="space-y-2">
-                <Label for="type">Venue Type *</Label>
+                <Label for="type" class="">Venue Type</Label>
                 <select
                   id="type"
                   bind:value={formData.type}
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  class="flex h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   required
                 >
                   <option value="">Select venue type</option>
@@ -214,146 +219,184 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="space-y-2">
-                <Label for="location" class="flex items-center gap-1">
-                  <MapPin class="h-4 w-4" />
-                  Location *
-                </Label>
-                <Input
-                  id="location"
-                  bind:value={formData.location}
-                  placeholder="e.g., Istanbul, Besiktas"
-                  required
-                />
+                <Label for="location" class="">Location</Label>
+                <div class="relative">
+                  <Input
+                    id="location"
+                    bind:value={formData.location}
+                    placeholder="e.g., Istanbul, Besiktas"
+                    class="pl-9 bg-gray-50/50"
+                    required
+                    type="text"
+                  />
+                  <MapPin class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                </div>
               </div>
               <div class="space-y-2">
-                <Label for="capacity" class="flex items-center gap-1">
-                  <Users class="h-4 w-4" />
-                  Capacity *
-                </Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  bind:value={formData.capacity}
-                  placeholder="Maximum number of guests"
-                  min="1"
-                  required
-                />
+                <Label for="capacity" class="">Capacity</Label>
+                <div class="relative">
+                  <Input
+                    id="capacity"
+                    type="number"
+                    bind:value={formData.capacity}
+                    placeholder="Max guests"
+                    min="1"
+                    class="pl-9 bg-gray-50/50"
+                    required
+                  />
+                  <Users class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                </div>
               </div>
             </div>
 
             <div class="space-y-2">
-              <Label for="description">Description</Label>
+              <Label for="description" class="">Description</Label>
               <textarea
                 id="description"
                 bind:value={formData.description}
                 placeholder="Describe your venue, its atmosphere, and what makes it special..."
-                rows="4"
-                class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows="5"
+                class="flex w-full rounded-md border border-input bg-gray-50/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-vertical"
               ></textarea>
             </div>
           </CardContent>
         </Card>
 
         <!-- Contact & Pricing -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact & Pricing</CardTitle>
-            <CardDescription>
+        <Card
+          class="border-none shadow-sm ring-1 ring-gray-200 dark:ring-gray-800"
+        >
+          <CardHeader class="">
+            <CardTitle class="text-xl">Contact & Pricing</CardTitle>
+            <CardDescription class="">
               How can clients reach you and what are your rates?
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="space-y-2">
-                <Label for="email">Contact Email</Label>
+                <Label for="email" class="">Contact Email</Label>
                 <Input
                   id="email"
                   type="email"
                   bind:value={formData.contactEmail}
                   placeholder="venue@example.com"
+                  class="bg-gray-50/50"
                 />
               </div>
               <div class="space-y-2">
-                <Label for="phone">Contact Phone</Label>
+                <Label for="phone" class="">Contact Phone</Label>
                 <Input
                   id="phone"
                   bind:value={formData.contactPhone}
                   placeholder="+90 555 123 4567"
+                  class="bg-gray-50/50"
+                  type="text"
                 />
               </div>
               <div class="space-y-2">
-                <Label for="price">Price per Hour (₺)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  bind:value={formData.pricePerHour}
-                  placeholder="1000"
-                  min="0"
-                />
+                <Label for="price" class="">Price per Hour (₺)</Label>
+                <div class="relative">
+                  <Input
+                    id="price"
+                    type="number"
+                    bind:value={formData.pricePerHour}
+                    placeholder="1000"
+                    min="0"
+                    class="pl-9 bg-gray-50/50"
+                  />
+                  <span class="absolute left-3 top-2.5 text-gray-400 font-bold"
+                    >₺</span
+                  >
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <!-- Amenities -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Amenities & Features</CardTitle>
-            <CardDescription>
-              What facilities and services does your venue offer?
+        <Card
+          class="border-none shadow-sm ring-1 ring-gray-200 dark:ring-gray-800"
+        >
+          <CardHeader class="">
+            <CardTitle class="text-xl">Amenities & Features</CardTitle>
+            <CardDescription class="">
+              Select all that apply to showcase your venue's value.
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <!-- Add custom amenity -->
-            <div class="flex gap-2">
-              <Input
-                bind:value={newAmenity}
-                placeholder="Add custom amenity..."
-                on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
-              />
-              <button 
-                type="button" 
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                on:click={addAmenity}
+          <CardContent class="space-y-6">
+            <!-- Suggested -->
+            <div class="space-y-3">
+              <span class="text-sm font-medium text-gray-600"
+                >Popular Amenities</span
               >
-                <Plus class="h-4 w-4 mr-2" />
-                Add
-              </button>
-            </div>
-
-            <!-- Suggested amenities -->
-            <div>
-              <Label class="text-sm font-medium">Quick Add:</Label>
-              <div class="flex flex-wrap gap-2 mt-2">
+              <div class="flex flex-wrap gap-2">
                 {#each commonAmenities as amenity}
-                  {#if !formData.amenities.includes(amenity)}
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                      on:click={() => addSuggestedAmenity(amenity)}
-                    >
-                      <Plus class="h-3 w-3 mr-1" />
-                      {amenity}
-                    </button>
-                  {/if}
+                  <button
+                    type="button"
+                    class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                    {formData.amenities.includes(amenity)
+                      ? 'border-primary bg-primary/10 text-primary hover:bg-primary/20'
+                      : 'border-gray-200 bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
+                    onclick={() =>
+                      formData.amenities.includes(amenity)
+                        ? removeAmenity(amenity)
+                        : addSuggestedAmenity(amenity)}
+                  >
+                    {#if formData.amenities.includes(amenity)}
+                      <CheckCircle2 class="mr-1.5 h-3 w-3" />
+                    {:else}
+                      <Plus class="mr-1.5 h-3 w-3" />
+                    {/if}
+                    {amenity}
+                  </button>
                 {/each}
               </div>
             </div>
 
-            <!-- Selected amenities -->
+            <!-- Custom -->
+            <div class="space-y-3">
+              <span class="text-sm font-medium text-gray-600">Add Custom</span>
+              <div class="flex gap-2">
+                <Input
+                  bind:value={newAmenity}
+                  placeholder="e.g., Valet Parking"
+                  class="bg-gray-50/50"
+                  onkeydown={handleKeydown}
+                  type="text"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onclick={addAmenity}
+                  disabled={!newAmenity.trim()}
+                  class=""
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+
+            <!-- Selected List -->
             {#if formData.amenities.length > 0}
-              <div>
-                <Label class="text-sm font-medium">Selected Amenities:</Label>
-                <div class="flex flex-wrap gap-2 mt-2">
+              <div class="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
+                <div class="mb-2 text-xs font-semibold uppercase text-gray-500">
+                  Selected Amenities
+                </div>
+                <div class="flex flex-wrap gap-2">
                   {#each formData.amenities as amenity}
-                    <Badge variant="secondary" class="flex items-center gap-1">
+                    <Badge
+                      variant="secondary"
+                      class="pl-2 pr-1 py-1 flex items-center gap-1 bg-white border border-gray-200 text-gray-700"
+                      href="#"
+                    >
                       {amenity}
                       <button
                         type="button"
-                        on:click={() => removeAmenity(amenity)}
-                        class="ml-1 hover:bg-muted rounded-full p-0.5"
+                        onclick={() => removeAmenity(amenity)}
+                        class="ml-1 rounded-full p-0.5 hover:bg-gray-200 hover:text-red-500 transition-colors"
                       >
                         <X class="h-3 w-3" />
                       </button>
@@ -366,126 +409,106 @@
         </Card>
       </div>
 
-      <!-- Sidebar -->
-      <div class="space-y-6">
-        <!-- Actions -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <button 
-              type="submit" 
-              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+      <!-- Sticky Preview Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="sticky top-24 space-y-6">
+          <div
+            class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+          >
+            <h3
+              class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100"
             >
-              <Save class="h-4 w-4 mr-2" />
-              Create Venue
-            </button>
-            <button 
-              type="button" 
-              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full"
-              on:click={handleCancelClick}
-            >
-              Cancel
-            </button>
-          </CardContent>
-        </Card>
+              Live Preview
+            </h3>
 
-        <!-- Live Preview -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Live Preview</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <div class="border rounded-lg p-4 space-y-2">
-              <div class="font-semibold text-lg">
-                {formData.name || 'Venue Name'}
+            <!-- Preview Card -->
+            <div
+              class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div
+                class="aspect-video w-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400"
+              >
+                {#if formData.image}
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    class="h-full w-full object-cover"
+                  />
+                {:else}
+                  <Building class="h-10 w-10 opacity-20" />
+                {/if}
               </div>
-              
-              {#if formData.location}
-                <div class="flex items-center text-sm text-muted-foreground">
-                  <MapPin class="h-4 w-4 mr-1" />
-                  {formData.location}
+              <div class="p-4">
+                <div class="mb-2">
+                  <h4 class="font-bold text-gray-900 line-clamp-1">
+                    {formData.name || "Venue Name"}
+                  </h4>
+                  <p class="text-sm text-gray-500 flex items-center mt-1">
+                    <MapPin class="mr-1 h-3 w-3" />
+                    <span class="line-clamp-1"
+                      >{formData.location || "Location"}</span
+                    >
+                  </p>
                 </div>
-              {/if}
-              
-              {#if formData.capacity}
-                <div class="flex items-center text-sm text-muted-foreground">
-                  <Users class="h-4 w-4 mr-1" />
-                  Up to {formData.capacity} guests
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {#if formData.type}
+                    <Badge
+                      variant="secondary"
+                      class="text-[10px] px-1.5 py-0 h-5"
+                      href="#">{formData.type}</Badge
+                    >
+                  {/if}
+                  <Badge
+                    variant="outline"
+                    class="text-[10px] px-1.5 py-0 h-5 border-gray-200 text-gray-500"
+                    href="#"
+                  >
+                    <Users class="mr-1 h-3 w-3" />
+                    {formData.capacity || 0}
+                  </Badge>
                 </div>
-              {/if}
-              
-              {#if formData.type}
-                <Badge variant="outline" class="mt-2">
-                  {formData.type}
-                </Badge>
-              {/if}
-              
-              {#if formData.pricePerHour}
-                <div class="text-lg font-semibold text-green-600 mt-2">
-                  ₺{formData.pricePerHour}/hour
-                </div>
-              {/if}
-              
-              {#if formData.description}
-                <p class="text-sm text-muted-foreground mt-2 line-clamp-3">
-                  {formData.description}
-                </p>
-              {/if}
-              
-              {#if formData.amenities.length > 0}
-                <div class="mt-3">
-                  <div class="text-sm font-medium mb-1">Amenities:</div>
-                  <div class="flex flex-wrap gap-1">
-                    {#each formData.amenities.slice(0, 3) as amenity}
-                      <Badge variant="secondary" class="text-xs">
-                        {amenity}
-                      </Badge>
-                    {/each}
-                    {#if formData.amenities.length > 3}
-                      <Badge variant="secondary" class="text-xs">
-                        +{formData.amenities.length - 3} more
-                      </Badge>
-                    {/if}
+
+                <div
+                  class="flex items-center justify-between border-t border-gray-100 pt-3 mt-3"
+                >
+                  <div class="text-xs text-gray-500">Starting from</div>
+                  <div class="font-bold text-primary">
+                    {formData.pricePerHour
+                      ? `₺${formData.pricePerHour}/hr`
+                      : "Price not set"}
                   </div>
                 </div>
-              {/if}
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        <!-- Tips -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Tips</CardTitle>
-          </CardHeader>
-          <CardContent class="text-sm space-y-2">
-            <div class="flex items-start gap-2">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-              <p>Add high-quality photos to attract more bookings</p>
+            <div class="mt-6 space-y-4">
+              <div class="flex items-start gap-3">
+                <div
+                  class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600"
+                >
+                  <span class="text-xs font-bold">1</span>
+                </div>
+                <p class="text-xs text-gray-500">
+                  Fill in all details carefully. The more information you
+                  provide, the better.
+                </p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div
+                  class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600"
+                >
+                  <span class="text-xs font-bold">2</span>
+                </div>
+                <p class="text-xs text-gray-500">
+                  Upload high-quality images to increase booking rates by up to
+                  40%.
+                </p>
+              </div>
             </div>
-            <div class="flex items-start gap-2">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-              <p>Be detailed in your description to set clear expectations</p>
-            </div>
-            <div class="flex items-start gap-2">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-              <p>List all amenities to showcase your venue's value</p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
-  </form>
+  </div>
 </div>
-
-<style>
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-clamp: 3;
-  }
-</style>
