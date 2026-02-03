@@ -478,7 +478,7 @@
             </div>
           </Card.Content>
         </Card.Root>
-      </div>
+
         <Card.Root class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <Card.Header class="p-0 mb-6">
             <Card.Title class="text-lg">Security</Card.Title>
