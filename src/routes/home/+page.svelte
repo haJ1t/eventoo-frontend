@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import { tweened } from "svelte/motion";
   import { cubicOut } from "svelte/easing";
@@ -9,6 +9,7 @@
     Users,
     DollarSign,
     TrendingUp,
+    TrendingDown,
     BarChart3,
     MapPin,
     Bell,
@@ -17,10 +18,17 @@
     ChevronLeft,
     ChevronRight,
     Settings,
+    LogOut,
   } from "lucide-svelte";
 
   import ResourceCard from "$lib/components/shared/ResourceCard.svelte";
   import ResourceModal from "$lib/components/shared/ResourceModal.svelte";
+
+  import {
+    fetchDashboardSummary,
+    type DashboardStats,
+  } from "$lib/services/api";
+  import { logout } from "$lib/services/api";
 
   // Animasyonlu sayılar
   const eventCount = tweened(0, { duration: 1000, easing: cubicOut });
@@ -28,68 +36,74 @@
   const revenueCount = tweened(0, { duration: 1400, easing: cubicOut });
   const growthCount = tweened(0, { duration: 1600, easing: cubicOut });
 
-  let isLoaded = $state(false);
-  let showModal = $state(false);
-  let selectedEvent = $state(null);
+  type UpcomingEvent = {
+    id: number;
+    name: string;
+    date: string;
+    dateLabel: string;
+    location: string;
+    status: string;
+    image: string;
+    description: string;
+    price: number;
+    category: string;
+    attendees: string;
+    tags: string[];
+  };
 
-  onMount(() => {
-    setTimeout(() => {
-      isLoaded = true;
-      eventCount.set(24);
-      participantCount.set(1250);
-      revenueCount.set(45000);
-      growthCount.set(12.5);
-    }, 300);
+  let showModal = $state(false);
+  let selectedEvent = $state<UpcomingEvent | null>(null);
+  let upcomingEvents = $state<UpcomingEvent[]>([]);
+  let calendarEvents = $state<UpcomingEvent[]>([]);
+  let dashboardStats = $state<DashboardStats>({
+    total_events: 0,
+    participants: 0,
+    revenue: 0,
+    growth: 0,
+    event_change: 0,
+    participant_change: 0,
+    revenue_change: 0,
   });
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      name: "Tech Conference 2024",
-      date: "2024-09-15",
-      location: "San Francisco, CA",
-      status: "Scheduled",
-      image:
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
-      description: "Join us for the biggest tech conference of the year.",
-      price: "$299",
-      category: "Technology",
-      attendees: 500,
-      tags: ["Tech", "Conference"],
-    },
-    {
-      id: 2,
-      name: "Music Festival",
-      date: "2024-09-22",
-      location: "New York, NY",
-      status: "Pending",
-      image:
-        "https://images.unsplash.com/photo-1459749411177-05be25b15f35?w=800",
-      description: "Three days of amazing music and food.",
-      price: "$199",
-      category: "Music",
-      attendees: 1000,
-      tags: ["Music", "Festival"],
-    },
-    {
-      id: 3,
-      name: "Art Exhibition",
-      date: "2024-09-30",
-      location: "London, UK",
-      status: "Confirmed",
-      image:
-        "https://images.unsplash.com/photo-1460661631562-b628fff2758f?w=800",
-      description: "Contemporary art from local artists.",
-      price: "$99",
-      category: "Art",
-      attendees: 150,
-      tags: ["Art", "Exhibition"],
-    },
-  ];
+  onMount(async () => {
+    try {
+      const summary = await fetchDashboardSummary();
+      dashboardStats = summary.stats;
+
+      eventCount.set(summary.stats.total_events || 0);
+      participantCount.set(summary.stats.participants || 0);
+      revenueCount.set(summary.stats.revenue || 0);
+      growthCount.set(summary.stats.growth || 0);
+
+      calendarEvents = summary.events.map((e) => ({
+        id: e.id,
+        name: e.title,
+        date: e.date,
+        dateLabel: e.date_label,
+        location: e.location,
+        status: e.status,
+        image: e.image || "",
+        description: e.description || "",
+        price: e.price,
+        category: e.category,
+        attendees: e.attendees,
+        tags: e.tags || [],
+      }));
+
+      upcomingEvents = calendarEvents.slice(0, 4);
+    } catch (e) {
+      console.error("Failed to load dashboard summary", e);
+    }
+  });
 
   function handleViewDetails(event) {
     selectedEvent = event;
     showModal = true;
+  }
+
+  async function handleLogout() {
+    await logout();
+    goto("/login");
   }
 
   // Calendar Logic
@@ -136,14 +150,23 @@
     }
   }
 
+  function formatDateKey(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
   function hasEvent(day, month, year) {
     const checkDate = new Date(year, month, day);
-    const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
-    return upcomingEvents.some((e) => e.date === dateStr);
+    const dateStr = formatDateKey(checkDate);
+    return calendarEvents.some((e) => e.date === dateStr);
   }
 
   function selectDate(day) {
-    selectedDate = new Date(currentYear, currentMonth, day);
+    const next = new Date(currentYear, currentMonth, day);
+    if (selectedDate && formatDateKey(selectedDate) === formatDateKey(next)) {
+      selectedDate = null;
+      return;
+    }
+    selectedDate = next;
   }
 
   const daysInMonth = $derived(getDaysInMonth(currentMonth, currentYear));
@@ -152,9 +175,30 @@
     Array.from({ length: daysInMonth }, (_, i) => i + 1),
   );
   const emptyDays = $derived(Array.from({ length: firstDay }, (_, i) => null));
+
+  const selectedDateKey = $derived.by(() =>
+    selectedDate ? formatDateKey(selectedDate) : null,
+  );
+  const selectedDateLabel = $derived.by(() =>
+    selectedDate
+      ? new Intl.DateTimeFormat("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }).format(selectedDate)
+      : "",
+  );
+  const selectedDayEvents = $derived.by(() =>
+    selectedDateKey
+      ? calendarEvents.filter((e) => e.date === selectedDateKey)
+      : [],
+  );
+  const displayEvents = $derived.by(() =>
+    selectedDateKey ? selectedDayEvents : upcomingEvents,
+  );
 </script>
 
-<div class="grid grid-cols-1 xl:grid-cols-4 gap-8 max-w-full p-6">
+<div class="grid grid-cols-1 xl:grid-cols-4 gap-8 max-w-full page-pad">
   <!-- Left Side: Main Dashboard -->
   <div class="xl:col-span-3 space-y-8">
     <!-- Welcome Header -->
@@ -162,13 +206,20 @@
       class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
       in:fly={{ y: -20, duration: 600 }}
     >
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
-          Dashboard
-        </h1>
-        <p class="text-gray-500 mt-1">
-          Overview of your events and performance.
-        </p>
+      <div class="flex items-start gap-3">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
+        >
+          <BarChart3 class="h-5 w-5" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p class="text-gray-500 mt-1">
+            Overview of your events and performance.
+          </p>
+        </div>
       </div>
       <button
         class="bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-medium"
@@ -193,9 +244,17 @@
             <Calendar class="w-6 h-6" />
           </div>
           <span
-            class="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full"
+            class="flex items-center text-xs font-medium px-2 py-1 rounded-full {dashboardStats.event_change >=
+            0
+              ? 'text-green-600 bg-green-50'
+              : 'text-rose-600 bg-rose-50'}"
           >
-            <TrendingUp class="w-3 h-3 mr-1" /> +12%
+            {#if dashboardStats.event_change >= 0}
+              <TrendingUp class="w-3 h-3 mr-1" />
+            {:else}
+              <TrendingDown class="w-3 h-3 mr-1" />
+            {/if}
+            {Math.abs(dashboardStats.event_change).toFixed(1)}%
           </span>
         </div>
         <div>
@@ -218,9 +277,17 @@
             <Users class="w-6 h-6" />
           </div>
           <span
-            class="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full"
+            class="flex items-center text-xs font-medium px-2 py-1 rounded-full {dashboardStats.participant_change >=
+            0
+              ? 'text-green-600 bg-green-50'
+              : 'text-rose-600 bg-rose-50'}"
           >
-            <TrendingUp class="w-3 h-3 mr-1" /> +5%
+            {#if dashboardStats.participant_change >= 0}
+              <TrendingUp class="w-3 h-3 mr-1" />
+            {:else}
+              <TrendingDown class="w-3 h-3 mr-1" />
+            {/if}
+            {Math.abs(dashboardStats.participant_change).toFixed(1)}%
           </span>
         </div>
         <div>
@@ -243,9 +310,17 @@
             <DollarSign class="w-6 h-6" />
           </div>
           <span
-            class="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full"
+            class="flex items-center text-xs font-medium px-2 py-1 rounded-full {dashboardStats.revenue_change >=
+            0
+              ? 'text-green-600 bg-green-50'
+              : 'text-rose-600 bg-rose-50'}"
           >
-            <TrendingUp class="w-3 h-3 mr-1" /> +8%
+            {#if dashboardStats.revenue_change >= 0}
+              <TrendingUp class="w-3 h-3 mr-1" />
+            {:else}
+              <TrendingDown class="w-3 h-3 mr-1" />
+            {/if}
+            {Math.abs(dashboardStats.revenue_change).toFixed(1)}%
           </span>
         </div>
         <div>
@@ -268,9 +343,17 @@
             <Target class="w-6 h-6" />
           </div>
           <span
-            class="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full"
+            class="flex items-center text-xs font-medium px-2 py-1 rounded-full {dashboardStats.growth >=
+            0
+              ? 'text-green-600 bg-green-50'
+              : 'text-rose-600 bg-rose-50'}"
           >
-            <TrendingUp class="w-3 h-3 mr-1" /> +2.5%
+            {#if dashboardStats.growth >= 0}
+              <TrendingUp class="w-3 h-3 mr-1" />
+            {:else}
+              <TrendingDown class="w-3 h-3 mr-1" />
+            {/if}
+            {Math.abs(dashboardStats.growth).toFixed(1)}%
           </span>
         </div>
         <div>
@@ -285,36 +368,69 @@
     <!-- Upcoming Events Section -->
     <div in:fly={{ y: 20, delay: 500 }}>
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-900">Upcoming Events</h2>
-        <button
-          onclick={() => goto("/events")}
-          class="text-sm font-medium text-gray-500 hover:text-black hover:underline underline-offset-4 transition-all"
-        >
-          View All
-        </button>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">
+            {#if selectedDateKey}
+              Events on {selectedDateLabel}
+            {:else}
+              Upcoming Events
+            {/if}
+          </h2>
+          {#if selectedDateKey}
+            <p class="text-sm text-gray-500">
+              {selectedDayEvents.length} event{selectedDayEvents.length === 1
+                ? ""
+                : "s"} scheduled
+            </p>
+          {/if}
+        </div>
+        {#if selectedDateKey}
+          <button
+            onclick={() => (selectedDate = null)}
+            class="text-sm font-medium text-gray-500 hover:text-black hover:underline underline-offset-4 transition-all"
+          >
+            Clear Selection
+          </button>
+        {:else}
+          <button
+            onclick={() => goto("/events")}
+            class="text-sm font-medium text-gray-500 hover:text-black hover:underline underline-offset-4 transition-all"
+          >
+            View All
+          </button>
+        {/if}
       </div>
 
       <!-- Unified Resource Cards Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {#each upcomingEvents as event}
-          <div class="h-full">
-            <ResourceCard
-              image={event.image}
-              title={event.name}
-              status={event.status}
-              subtitle={event.location}
-              description={event.description}
-              price={event.price}
-              type={event.category}
-              stats={[
-                { icon: Calendar, value: event.date },
-                { icon: Users, value: event.attendees },
-              ]}
-              onView={() => handleViewDetails(event)}
-            />
-          </div>
-        {/each}
-      </div>
+      {#if displayEvents.length === 0}
+        <div
+          class="rounded-2xl border border-dashed border-gray-200 bg-white/60 p-8 text-center text-sm text-gray-500"
+        >
+          No events scheduled for this day.
+        </div>
+      {:else}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {#each displayEvents as event}
+            <div class="h-full">
+              <ResourceCard
+                compact={true}
+                image={event.image}
+                title={event.name}
+                status={event.status}
+                subtitle={event.location}
+                description={event.description}
+                price={event.price}
+                type={event.category}
+                stats={[
+                  { icon: Calendar, value: event.dateLabel },
+                  { icon: Users, value: event.attendees },
+                ]}
+                onView={() => handleViewDetails(event)}
+              />
+            </div>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <!-- Recent Activity Timeline -->
@@ -417,17 +533,7 @@
             >Create Event</span
           >
         </button>
-        <button
-          onclick={() => goto("/users")}
-          class="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl text-left transition-all group"
-        >
-          <Users
-            class="w-6 h-6 mb-2 text-green-600 group-hover:scale-110 transition-transform"
-          />
-          <span class="text-sm font-medium block text-gray-900"
-            >Manage Users</span
-          >
-        </button>
+
         <button
           onclick={() => goto("/reports")}
           class="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl text-left transition-all group"
@@ -448,6 +554,15 @@
           />
           <span class="text-sm font-medium block text-gray-900">Settings</span>
         </button>
+        <button
+          onclick={handleLogout}
+          class="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl text-left transition-all group"
+        >
+          <LogOut
+            class="w-6 h-6 mb-2 text-red-600 group-hover:scale-110 transition-transform"
+          />
+          <span class="text-sm font-medium block text-gray-900">Log Out</span>
+        </button>
       </div>
     </div>
   </div>
@@ -467,7 +582,7 @@
     <div slot="metrics" class="grid grid-cols-2 gap-4">
       <div class="flex items-center gap-2">
         <Calendar class="w-4 h-4 text-gray-500" />
-        <span>{selectedEvent.date}</span>
+        <span>{selectedEvent.dateLabel}</span>
       </div>
       <div class="flex items-center gap-2">
         <Users class="w-4 h-4 text-gray-500" />

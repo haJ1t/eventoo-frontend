@@ -3,12 +3,105 @@
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
 	import * as Pagination from "$lib/components/ui/pagination/index.js";
-	import { MapPin, User2, Tag, Calendar, Users } from "lucide-svelte";
+	import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
+	import { Input } from "$lib/components/ui/input";
+	import { Label } from "$lib/components/ui/label";
+	import { MapPin, User2, Tag, Calendar, Users, Pencil, Trash2 } from "lucide-svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { goto } from "$app/navigation";
 	import { flip } from "svelte/animate";
 	import { fade } from "svelte/transition";
-	import { events } from "$lib/data/events";
+	import { fetchEvents, updateEvent, deleteEvent, type Event } from "$lib/services/api";
+	import { onMount } from "svelte";
+
+	let events = $state<Event[]>([]);
+	let loading = $state(true);
+
+	// Edit modal state
+	let editModalOpen = $state(false);
+	let editingEvent = $state<Event | null>(null);
+	let editFormData = $state({
+		title: "",
+		description: "",
+		category: "",
+		price: 0,
+	});
+	let isUpdating = $state(false);
+
+	// Delete dialog state
+	let deleteDialogOpen = $state(false);
+	let deletingEvent = $state<Event | null>(null);
+	let isDeleting = $state(false);
+
+	onMount(async () => {
+		try {
+			events = await fetchEvents();
+		} catch (error) {
+			console.error("Failed to fetch events:", error);
+		} finally {
+			loading = false;
+		}
+	});
+
+	// Edit functions
+	function openEditModal(event: Event) {
+		editingEvent = event;
+		editFormData = {
+			title: event.title,
+			description: event.description || "",
+			category: event.category || "",
+			price: event.price || 0,
+		};
+		editModalOpen = true;
+	}
+
+	async function handleUpdate() {
+		if (!editingEvent) return;
+		isUpdating = true;
+
+		try {
+			await updateEvent(editingEvent.id, {
+				title: editFormData.title,
+				description: editFormData.description,
+				category: editFormData.category,
+				price: editFormData.price,
+			});
+
+			// Refresh events list
+			events = await fetchEvents();
+			editModalOpen = false;
+			editingEvent = null;
+		} catch (err: any) {
+			console.error("Failed to update event:", err);
+			alert("Failed to update event: " + err.message);
+		} finally {
+			isUpdating = false;
+		}
+	}
+
+	// Delete functions
+	function openDeleteDialog(event: Event) {
+		deletingEvent = event;
+		deleteDialogOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!deletingEvent) return;
+		isDeleting = true;
+
+		try {
+			await deleteEvent(deletingEvent.id);
+			events = events.filter(e => e.id !== deletingEvent!.id);
+			deleteDialogOpen = false;
+			deletingEvent = null;
+		} catch (err: any) {
+			console.error("Failed to delete event:", err);
+			alert("Failed to delete event: " + err.message);
+		} finally {
+			isDeleting = false;
+		}
+	}
 
 	let searchQuery = $state("");
 	let selectedTags = $state<string[]>([]);
@@ -146,21 +239,28 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="min-h-screen bg-gray-50/50 p-6 dark:bg-gray-950">
-	<div class="mx-auto max-w-7xl space-y-8">
+<div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 page-pad">
+	<div class="w-full max-w-full space-y-8">
 		<!-- Header Section -->
 		<div
 			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
 		>
-			<div>
-				<h1
-					class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+			<div class="flex items-start gap-3">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
 				>
-					Events
-				</h1>
-				<p class="mt-1 text-gray-500 dark:text-gray-400">
-					Discover and join amazing events nearby
-				</p>
+					<Calendar class="h-5 w-5" />
+				</div>
+				<div>
+					<h1
+						class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+					>
+						Events
+					</h1>
+					<p class="mt-1 text-gray-500 dark:text-gray-400">
+						Discover and join amazing events nearby
+					</p>
+				</div>
 			</div>
 			<Button
 				onclick={navigateToAddEvent}
@@ -253,7 +353,7 @@
 			</div>
 
 			<div
-				class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+			class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
 			>
 				{#each paginatedEvents as event (event.id)}
 					<div
@@ -273,6 +373,8 @@
 								{ icon: Users, value: event.attendees },
 							]}
 							onView={() => handleViewDetails(event)}
+							onEdit={() => openEditModal(event)}
+							onDelete={() => openDeleteDialog(event)}
 						/>
 					</div>
 				{/each}
@@ -358,3 +460,84 @@
 		</div>
 	</div>
 </div>
+
+<!-- Edit Modal -->
+<Dialog.Root bind:open={editModalOpen}>
+	<Dialog.Content class="sm:max-w-[500px]">
+		<Dialog.Header>
+			<Dialog.Title>Edit Event</Dialog.Title>
+			<Dialog.Description>
+				Make changes to the event details below.
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="grid gap-4 py-4">
+			<div class="space-y-2">
+				<Label for="edit-title">Title</Label>
+				<Input
+					id="edit-title"
+					bind:value={editFormData.title}
+					placeholder="Event title"
+					type="text"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-category">Category</Label>
+				<Input
+					id="edit-category"
+					bind:value={editFormData.category}
+					placeholder="Category"
+					type="text"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-price">Price</Label>
+				<Input
+					id="edit-price"
+					bind:value={editFormData.price}
+					placeholder="Price"
+					type="number"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-description">Description</Label>
+				<textarea
+					id="edit-description"
+					bind:value={editFormData.description}
+					placeholder="Event description"
+					rows="3"
+					class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+				></textarea>
+			</div>
+		</div>
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => editModalOpen = false} disabled={isUpdating}>
+				Cancel
+			</Button>
+			<Button onclick={handleUpdate} disabled={isUpdating}>
+				{isUpdating ? "Saving..." : "Save Changes"}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Delete Event?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Are you sure you want to delete "{deletingEvent?.title}"? This action cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={isDeleting}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				onclick={confirmDelete}
+				class="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+				disabled={isDeleting}
+			>
+				{isDeleting ? "Deleting..." : "Delete"}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

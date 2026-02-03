@@ -18,24 +18,116 @@
 		Search,
 		ArrowUpRight,
 		Sparkles,
+		Trash2,
 	} from "lucide-svelte";
 
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
+	import { Input } from "$lib/components/ui/input";
+	import { Label } from "$lib/components/ui/label";
 	import * as Dialog from "$lib/components/ui/dialog";
+	import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
 	import * as Pagination from "$lib/components/ui/pagination/index.js";
 	import { fade, fly } from "svelte/transition";
 	import { flip } from "svelte/animate";
 
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
-	import {
-		attendees as attendeesData,
-		type Attendee,
-	} from "$lib/data/attendees";
+	import { fetchAttendees, updateUser, deleteUser, type Attendee } from "$lib/services/api";
+	import { onMount } from "svelte";
 
 	// State
-	let attendees = $state<Attendee[]>(attendeesData);
+	let attendees = $state<Attendee[]>([]);
+	let isLoading = $state(true);
+
+	// Edit modal state
+	let editModalOpen = $state(false);
+	let editingAttendee = $state<Attendee | null>(null);
+	let editFormData = $state({
+		first_name: "",
+		last_name: "",
+		email: "",
+		phone: "",
+	});
+	let isUpdating = $state(false);
+
+	// Delete dialog state
+	let deleteDialogOpen = $state(false);
+	let deletingAttendee = $state<Attendee | null>(null);
+	let isDeleting = $state(false);
+
+	async function loadAttendees() {
+		try {
+			attendees = await fetchAttendees();
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	onMount(async () => {
+		try {
+			attendees = await fetchAttendees();
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isLoading = false;
+		}
+	});
+
+	// Edit functions
+	function openEditModal(attendee: Attendee) {
+		editingAttendee = attendee;
+		editFormData = {
+			first_name: attendee.first_name || (attendee.name?.split(' ')[0] || ''),
+			last_name: attendee.last_name || (attendee.name?.split(' ').slice(1).join(' ') || ''),
+			email: attendee.email,
+			phone: attendee.phone || '',
+		};
+		editModalOpen = true;
+	}
+
+	async function handleUpdate() {
+		if (!editingAttendee) return;
+		isUpdating = true;
+
+		try {
+			await updateUser(editingAttendee.id, editFormData);
+			await loadAttendees();
+			editModalOpen = false;
+			editingAttendee = null;
+		} catch (err: any) {
+			console.error("Failed to update attendee:", err);
+			alert("Failed to update attendee: " + err.message);
+		} finally {
+			isUpdating = false;
+		}
+	}
+
+	// Delete functions
+	function openDeleteDialog(attendee: Attendee) {
+		deletingAttendee = attendee;
+		deleteDialogOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!deletingAttendee) return;
+		isDeleting = true;
+
+		try {
+			await deleteUser(deletingAttendee.id);
+			await loadAttendees();
+			deleteDialogOpen = false;
+			deletingAttendee = null;
+		} catch (err: any) {
+			console.error("Failed to delete attendee:", err);
+			alert("Failed to delete attendee: " + err.message);
+		} finally {
+			isDeleting = false;
+		}
+	}
+
+	// State
+
 	let searchQuery = $state("");
 	let selectedStatuses = $state<string[]>([]);
 	let selectedTicketTypes = $state<string[]>([]);
@@ -72,9 +164,9 @@
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter(
 				(a) =>
-					a.name.toLowerCase().includes(query) ||
-					a.email.toLowerCase().includes(query) ||
-					a.company.toLowerCase().includes(query),
+					(a.name || "").toLowerCase().includes(query) ||
+					(a.email || "").toLowerCase().includes(query) ||
+					(a.company || "").toLowerCase().includes(query),
 			);
 		}
 		if (selectedStatuses.length > 0) {
@@ -157,28 +249,28 @@
 <svelte:head><title>Attendees - Evento</title></svelte:head>
 <svelte:window onclick={handleClickOutside} />
 
-<div class="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-	<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 page-pad">
+	<div class="w-full max-w-full">
 		<!-- Header -->
 		<div
-			class="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+			class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
 		>
-			<div>
-				<div class="flex items-center gap-3 mb-2">
-					<div
-						class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25"
-					>
-						<Users class="h-5 w-5 text-white" />
-					</div>
+			<div class="flex items-start gap-3">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
+				>
+					<Users class="h-5 w-5" />
+				</div>
+				<div>
 					<h1
-						class="text-4xl font-bold tracking-tight text-gray-900 dark:text-white"
+						class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
 					>
 						Attendees
 					</h1>
+					<p class="mt-1 text-gray-500 dark:text-gray-400">
+						Manage your guest list, track RSVPs and check-ins
+					</p>
 				</div>
-				<p class="text-gray-500 dark:text-gray-400 ml-[52px]">
-					Manage your guest list, track RSVPs and check-ins
-				</p>
 			</div>
 			<div class="flex gap-3">
 				<Button
@@ -281,7 +373,7 @@
 
 		<!-- Search & Filters -->
 		<div
-			class="relative z-50 mb-8 rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-gray-100 backdrop-blur-sm dark:bg-gray-900/80 dark:ring-gray-800"
+			class="relative z-40 mb-8 rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-gray-100 backdrop-blur-sm dark:bg-gray-900/80 dark:ring-gray-800"
 		>
 			<div
 				class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
@@ -390,13 +482,20 @@
 								>
 									<div class="relative">
 										<div
-											class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-xl font-bold text-primary ring-4 ring-white shadow-sm dark:ring-gray-900"
+											class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-xl font-bold text-primary ring-4 ring-white shadow-sm dark:ring-gray-900"
 										>
-											{attendee.avatar ||
-												attendee.name
+											{#if attendee.avatar}
+												<img
+													src={attendee.avatar}
+													alt={attendee.name}
+													class="h-full w-full object-cover"
+												/>
+											{:else}
+												{attendee.name
 													.split(" ")
 													.map((n) => n[0])
 													.join("")}
+											{/if}
 										</div>
 										{#if attendee.checkedIn}
 											<div
@@ -478,13 +577,27 @@
 									>
 										{attendee.ticketType}
 									</Badge>
-									<button
-										onclick={() =>
-											openDetailsModal(attendee)}
-										class="flex items-center gap-1 text-sm font-medium text-gray-900 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-700"
-									>
-										View <ArrowUpRight class="h-4 w-4" />
-									</button>
+									<div class="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+										<button
+											onclick={() => openEditModal(attendee)}
+											class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+										>
+											<Edit class="h-4 w-4" />
+										</button>
+										<button
+											onclick={() => openDeleteDialog(attendee)}
+											class="p-1.5 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600"
+										>
+											<Trash2 class="h-4 w-4" />
+										</button>
+										<button
+											onclick={() =>
+												openDetailsModal(attendee)}
+											class="flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-gray-700"
+										>
+											View <ArrowUpRight class="h-4 w-4" />
+										</button>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -533,10 +646,17 @@
 								<td class="px-6 py-4">
 									<div class="flex items-center gap-4">
 										<div
-											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 font-semibold text-violet-700"
+											class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 font-semibold text-violet-700"
 										>
-											{attendee.avatar ||
-												attendee.name.charAt(0)}
+											{#if attendee.avatar}
+												<img
+													src={attendee.avatar}
+													alt={attendee.name}
+													class="h-full w-full object-cover"
+												/>
+											{:else}
+												{attendee.name.charAt(0)}
+											{/if}
 										</div>
 										<div>
 											<p
@@ -600,14 +720,25 @@
 									</div>
 								</td>
 								<td class="px-6 py-4 text-right">
-									<Button
-										variant="ghost"
-										size="sm"
-										class="opacity-0 group-hover:opacity-100"
-										disabled={false}
-									>
-										<Edit class="h-4 w-4" />
-									</Button>
+									<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100">
+										<Button
+											variant="ghost"
+											size="sm"
+											onclick={() => openEditModal(attendee)}
+											disabled={false}
+										>
+											<Edit class="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											onclick={() => openDeleteDialog(attendee)}
+											class="hover:text-red-600 hover:bg-red-50"
+											disabled={false}
+										>
+											<Trash2 class="h-4 w-4" />
+										</Button>
+									</div>
 								</td>
 							</tr>
 						{/each}
@@ -681,13 +812,20 @@
 				<!-- Avatar and Name -->
 				<div class="flex items-center gap-4">
 					<div
-						class="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10 text-xl font-bold text-primary"
+						class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-xl font-bold text-primary"
 					>
-						{selectedAttendee.avatar ||
-							selectedAttendee.name
+						{#if selectedAttendee.avatar}
+							<img
+								src={selectedAttendee.avatar}
+								alt={selectedAttendee.name}
+								class="h-full w-full object-cover"
+							/>
+						{:else}
+							{selectedAttendee.name
 								.split(" ")
 								.map((n) => n[0])
 								.join("")}
+						{/if}
 					</div>
 					<div>
 						<h3 class="text-lg font-semibold text-gray-900">
@@ -802,3 +940,85 @@
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>
+
+<!-- Edit Attendee Modal -->
+<Dialog.Root bind:open={editModalOpen}>
+	<Dialog.Content class="sm:max-w-[500px]">
+		<Dialog.Header>
+			<Dialog.Title>Edit Attendee</Dialog.Title>
+			<Dialog.Description>
+				Update attendee information below.
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="grid gap-4 py-4">
+			<div class="grid grid-cols-2 gap-4">
+				<div class="space-y-2">
+					<Label for="edit-first-name">First Name</Label>
+					<Input
+						id="edit-first-name"
+						bind:value={editFormData.first_name}
+						placeholder="First name"
+						type="text"
+					/>
+				</div>
+				<div class="space-y-2">
+					<Label for="edit-last-name">Last Name</Label>
+					<Input
+						id="edit-last-name"
+						bind:value={editFormData.last_name}
+						placeholder="Last name"
+						type="text"
+					/>
+				</div>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-email">Email</Label>
+				<Input
+					id="edit-email"
+					bind:value={editFormData.email}
+					placeholder="Email address"
+					type="email"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-phone">Phone</Label>
+				<Input
+					id="edit-phone"
+					bind:value={editFormData.phone}
+					placeholder="Phone number"
+					type="text"
+				/>
+			</div>
+		</div>
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => editModalOpen = false} disabled={isUpdating}>
+				Cancel
+			</Button>
+			<Button onclick={handleUpdate} disabled={isUpdating}>
+				{isUpdating ? "Saving..." : "Save Changes"}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Delete Attendee?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Are you sure you want to delete "{deletingAttendee?.name}"? This action cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={isDeleting}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				onclick={confirmDelete}
+				class="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+				disabled={isDeleting}
+			>
+				{isDeleting ? "Deleting..." : "Delete"}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

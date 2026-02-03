@@ -2,27 +2,55 @@
 	import { Button } from "$lib/components/ui/button";
 	import { goto } from "$app/navigation";
 	import { fade } from "svelte/transition";
-	import { ArrowLeft } from "@lucide/svelte";
+	import { onMount } from "svelte";
+	import { ArrowLeft, Calendar } from "@lucide/svelte";
 	import FileUpload from "$lib/components/file-upload.svelte";
+	import { createEvent, fetchVenues, fetchOrganizers, type Venue, type Organizer } from "$lib/services/api";
+
+	// Loaded data from API
+	let venues = $state<Venue[]>([]);
+	let organizers = $state<Organizer[]>([]);
+	let isLoading = $state(true);
+	let error = $state<string | null>(null);
 
 	// Form state
 	let formData = $state({
 		title: "",
 		date: "",
-		location: "",
+		startTime: "09:00",
+		endTime: "17:00",
+		venueId: "" as string | number,
+		locationOverride: "",
 		attendees: "",
 		description: "",
-		organizer: "",
+		organizerId: "" as string | number,
 		price: "",
 		category: "",
-		tags: [],
+		tags: [] as string[],
 		image: "",
 	});
 
-	let selectedTags = $state([]);
+	let selectedTags = $state<string[]>([]);
 	let showTagsDropdown = $state(false);
 	let isSubmitting = $state(false);
 	let customTagInput = $state("");
+
+	// Load venues and organizers on mount
+	onMount(async () => {
+		try {
+			const [venuesData, organizersData] = await Promise.all([
+				fetchVenues(),
+				fetchOrganizers()
+			]);
+			venues = venuesData;
+			organizers = organizersData;
+		} catch (err) {
+			console.error("Failed to load data:", err);
+			error = "Failed to load venues and organizers";
+		} finally {
+			isLoading = false;
+		}
+	});
 
 	// Predefined options
 	const categoryOptions = [
@@ -54,18 +82,6 @@
 		"Seminar",
 		"Competition",
 		"Charity",
-	];
-
-	const locationOptions = [
-		"Grand Ballroom",
-		"Central Park",
-		"City Art Gallery",
-		"Convention Center",
-		"Downtown Plaza",
-		"Community Center",
-		"University Campus",
-		"Sports Complex",
-		"Hotel Conference Room",
 	];
 
 	function toggleTag(tag) {
@@ -103,35 +119,73 @@
 		}
 	}
 
-	async function handleSubmit(event) {
+	function normalizeId(value: string | number | null | undefined) {
+		if (value === null || value === undefined || value === "") return null;
+		if (typeof value === "number") return value;
+		const parsed = Number(value);
+		return Number.isNaN(parsed) ? value : parsed;
+	}
+
+	async function handleSubmit(event: Event) {
 		event.preventDefault();
 		isSubmitting = true;
+		error = null;
 
 		try {
 			// Form validation
-			if (!formData.title || !formData.date || !formData.location) {
-				alert("Please fill in all required fields");
+			if (!formData.title || !formData.date) {
+				alert("Please fill in all required fields (Title and Date)");
+				isSubmitting = false;
 				return;
 			}
 
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			// Need either venue or location override
+			if (!formData.venueId && !formData.locationOverride) {
+				alert("Please select a venue or enter a custom location");
+				isSubmitting = false;
+				return;
+			}
 
-			// Create new event object
-			const newEvent = {
-				id: Date.now(), // Temporary ID generation
-				...formData,
+			// Need organizer
+			if (!formData.organizerId) {
+				alert("Please select an organizer");
+				isSubmitting = false;
+				return;
+			}
+
+			// Parse price (remove $ and convert to number)
+			const priceValue = formData.price.replace(/[^0-9.]/g, '');
+			const price = priceValue ? parseFloat(priceValue) : 0;
+
+			// Parse max attendees
+			const maxAttendees = formData.attendees.replace(/[^0-9]/g, '');
+
+			// Build API payload
+			const eventData = {
+				title: formData.title,
+				description: formData.description || undefined,
+				event_date: formData.date,
+				start_time: formData.startTime + ":00",
+				end_time: formData.endTime + ":00",
+				venue: normalizeId(formData.venueId),
+				location_override: formData.locationOverride || undefined,
+				organizer: normalizeId(formData.organizerId),
+				image: formData.image || undefined,
 				status: "Scheduled",
+				category: formData.category || "General",
+				price: price,
 				tags: selectedTags,
+				max_attendees: maxAttendees ? parseInt(maxAttendees) : 100,
 			};
 
-			console.log("New event created:", newEvent);
+			await createEvent(eventData);
 
-			// Redirect back to events page
+			// Redirect back to events page on success
 			goto("/events");
-		} catch (error) {
-			console.error("Error creating event:", error);
-			alert("Error creating event. Please try again.");
+		} catch (err: any) {
+			console.error("Error creating event:", err);
+			error = err.message || "Error creating event. Please try again.";
+			alert(error);
 		} finally {
 			isSubmitting = false;
 		}
@@ -151,10 +205,10 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="p-6 max-w-4xl mx-auto" in:fade={{ duration: 300 }}>
+<div class="max-w-4xl mx-auto page-pad" in:fade={{ duration: 300 }}>
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-center gap-4 mb-4">
+		<div class="flex items-start gap-4">
 			<Button
 				variant="ghost"
 				size="sm"
@@ -164,11 +218,22 @@
 			>
 				<ArrowLeft class="w-4 h-4" />
 			</Button>
-			<h1 class="text-3xl font-bold tracking-tight">Add New Event</h1>
+			<div class="flex items-start gap-3">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
+				>
+					<Calendar class="h-5 w-5" />
+				</div>
+				<div>
+					<h1 class="text-3xl font-bold tracking-tight">
+						Add New Event
+					</h1>
+					<p class="mt-1 text-gray-600">
+						Create a new event and share it with the community.
+					</p>
+				</div>
+			</div>
 		</div>
-		<p class="text-gray-600">
-			Create a new event and share it with the community.
-		</p>
 	</div>
 
 	<!-- Form -->
@@ -209,25 +274,77 @@
 				/>
 			</div>
 
-			<!-- Location -->
+			<!-- Start Time -->
 			<div>
 				<label
-					for="event-location"
+					for="event-start-time"
 					class="block text-sm font-medium text-gray-700 mb-2"
 				>
-					Location *
+					Start Time *
 				</label>
-				<select
-					id="event-location"
-					bind:value={formData.location}
+				<input
+					id="event-start-time"
+					type="time"
+					bind:value={formData.startTime}
 					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
 					required
+				/>
+			</div>
+
+			<!-- End Time -->
+			<div>
+				<label
+					for="event-end-time"
+					class="block text-sm font-medium text-gray-700 mb-2"
 				>
-					<option value="">Select location</option>
-					{#each locationOptions as location}
-						<option value={location}>{location}</option>
+					End Time *
+				</label>
+				<input
+					id="event-end-time"
+					type="time"
+					bind:value={formData.endTime}
+					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+					required
+				/>
+			</div>
+
+			<!-- Venue -->
+			<div>
+				<label
+					for="event-venue"
+					class="block text-sm font-medium text-gray-700 mb-2"
+				>
+					Venue
+				</label>
+				<select
+					id="event-venue"
+					bind:value={formData.venueId}
+					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+					disabled={isLoading}
+				>
+					<option value="">Select venue (or use custom location below)</option>
+					{#each venues as venue}
+						<option value={venue.id}>{venue.name} - {venue.city}</option>
 					{/each}
 				</select>
+			</div>
+
+			<!-- Custom Location (if no venue selected) -->
+			<div>
+				<label
+					for="event-location-override"
+					class="block text-sm font-medium text-gray-700 mb-2"
+				>
+					Custom Location
+				</label>
+				<input
+					id="event-location-override"
+					type="text"
+					bind:value={formData.locationOverride}
+					placeholder="Or enter custom location"
+					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+					disabled={!!formData.venueId}
+				/>
 			</div>
 
 			<!-- Expected Attendees -->
@@ -290,15 +407,20 @@
 					for="event-organizer"
 					class="block text-sm font-medium text-gray-700 mb-2"
 				>
-					Organizer
+					Organizer *
 				</label>
-				<input
+				<select
 					id="event-organizer"
-					type="text"
-					bind:value={formData.organizer}
-					placeholder="Organization or person name"
+					bind:value={formData.organizerId}
 					class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-				/>
+					disabled={isLoading}
+					required
+				>
+					<option value="">Select organizer</option>
+					{#each organizers as org}
+						<option value={org.id}>{org.organization_name || `${org.first_name} ${org.last_name}`}</option>
+					{/each}
+				</select>
 			</div>
 
 			<!-- Tags -->

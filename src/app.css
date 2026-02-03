@@ -119,6 +119,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .page-pad {
+    @apply px-4 py-8 sm:px-6 lg:px-8;
+  }
+
+  .page-pad-x {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+}
 /* Tabs specific styles */
 .tabs [role="tablist"] {
   display: flex;

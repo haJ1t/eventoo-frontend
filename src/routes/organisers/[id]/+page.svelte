@@ -299,7 +299,7 @@
 	<title>{organiser ? organiser.name : 'Organiser'} - Evento</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 max-w-6xl">
+<div class="mx-auto max-w-6xl page-pad">
 	{#if organiser}
 		<!-- Back Button -->
 		<div class="mb-6">

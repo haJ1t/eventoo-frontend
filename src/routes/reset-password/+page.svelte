@@ -21,7 +21,7 @@
     }
 </script>
 
-<div class="login-bg min-h-screen flex items-center justify-center p-4">
+<div class="login-bg min-h-screen flex items-center justify-center page-pad">
     <Card.Root
         class="w-full max-w-sm mx-auto p-8 rounded-2xl shadow-xl bg-white animate-fade-in"
     >

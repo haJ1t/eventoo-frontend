@@ -9,7 +9,7 @@
     <title>Error - Evento</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+<div class="min-h-screen bg-gray-50 flex items-center justify-center page-pad">
     <div
         class="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-2xl shadow-lg border border-gray-100"
     >

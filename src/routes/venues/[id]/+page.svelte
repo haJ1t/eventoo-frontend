@@ -102,7 +102,7 @@
   });
 </script>
 
-<div class="min-h-screen bg-gray-50/50 pb-20 dark:bg-gray-950 -mx-4 -mt-4">
+<div class="min-h-screen bg-gray-50/50 pb-20 dark:bg-gray-950">
   <!-- Immersive Hero Section -->
   <div
     class="relative h-[60vh] min-h-[500px] w-full overflow-hidden bg-gray-900"
@@ -119,7 +119,7 @@
 
     <!-- Hero Content -->
     <div
-      class="relative z-20 mx-auto flex h-full max-w-7xl flex-col justify-end px-6 pb-12 sm:px-8 lg:px-10"
+    class="relative z-20 mx-auto flex h-full max-w-7xl flex-col justify-end page-pad-x pb-12"
     >
       <div in:fly={{ y: 30, duration: 800, delay: 100 }} class="max-w-4xl">
         <Button
@@ -191,7 +191,7 @@
   </div>
 
   <!-- Main Content Layout -->
-  <div class="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8 relative z-30">
+  <div class="relative z-30 mx-auto mt-8 max-w-7xl page-pad-x">
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
       <!-- Left Column (Detail Content) -->
       <div class="lg:col-span-8 flex flex-col gap-8">

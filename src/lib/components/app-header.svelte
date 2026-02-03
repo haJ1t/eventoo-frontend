@@ -38,7 +38,7 @@
         class="w-6 h-6 cursor-pointer hover:text-gray-600 transition-colors"
       />
     </a>
-    <a href="./login">
+    <a href="/profile">
       <User
         class="w-7 h-7 rounded-full cursor-pointer hover:text-gray-600 transition-colors"
       />

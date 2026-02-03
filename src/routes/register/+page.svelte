@@ -4,6 +4,7 @@
  import { Input } from "$lib/components/ui/input/index.js";
  import * as Card from "$lib/components/ui/card/index.js";
  import { goto } from '$app/navigation';
+ import { registerAccount } from "$lib/services/api";
  let name = '';
  let email = '';
  let password = '';
@@ -21,8 +22,13 @@
      error = 'Passwords do not match.';
      return;
    }
-   error = '';
-   await goto('/login');
+   try {
+     error = '';
+     await registerAccount({ name, email, password });
+     await goto('/home');
+   } catch (err: any) {
+     error = err.message || 'Failed to register.';
+   }
  }
 </script>
 

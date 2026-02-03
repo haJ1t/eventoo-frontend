@@ -4,6 +4,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { goto } from "$app/navigation";
+  import { login } from "$lib/services/api";
   let email = "";
   let password = "";
   let showPassword = false;
@@ -12,11 +13,12 @@
 
   async function handleLogin(e: Event) {
     e.preventDefault();
-    if (email === "admin" && password === "admin") {
+    try {
       error = "";
-      await goto("/");
-    } else {
-      error = "Invalid email or password";
+      await login(email, password);
+      await goto("/home");
+    } catch (err: any) {
+      error = err.message || "Invalid email or password";
     }
   }
   function handleGoogleLogin() {

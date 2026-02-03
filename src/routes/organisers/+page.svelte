@@ -19,19 +19,133 @@
 		Phone,
 		ArrowUpRight,
 		Tag,
+		Edit,
+		Trash2,
 	} from "lucide-svelte";
 
 	import { Button } from "$lib/components/ui/button";
 	import { Badge } from "$lib/components/ui/badge";
+	import { Input } from "$lib/components/ui/input";
+	import { Label } from "$lib/components/ui/label";
 	import * as Pagination from "$lib/components/ui/pagination/index.js";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
+	import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
 	import { fade } from "svelte/transition";
 	import { flip } from "svelte/animate";
 
 	import AppSearchBar from "$lib/components/app-search-bar.svelte";
 	import AppFilterDropdown from "$lib/components/app-filter-dropdown.svelte";
 	import AppOrganiserDetailsModal from "$lib/components/app-organiser-details-modal.svelte";
-	import { organisers } from "$lib/data/organisers";
-	import type { Organiser } from "$lib/data/organisers";
+	import { fetchOrganizers, updateOrganizer, deleteOrganizer, type Organizer } from "$lib/services/api";
+	import { onMount } from "svelte";
+
+	let organisers = $state<Organizer[]>([]);
+	let isLoading = $state(true);
+
+	// Edit modal state
+	let editModalOpen = $state(false);
+	let editingOrganiser = $state<Organizer | null>(null);
+	let editFormData = $state({
+		first_name: "",
+		last_name: "",
+		email: "",
+		phone: "",
+		organization_name: "",
+	});
+	let isUpdating = $state(false);
+
+	// Delete dialog state
+	let deleteDialogOpen = $state(false);
+	let deletingOrganiser = $state<Organizer | null>(null);
+	let isDeleting = $state(false);
+
+	async function loadOrganisers() {
+		try {
+			const data = await fetchOrganizers();
+			organisers = data.map((o) => ({
+				...o,
+				name: o.organization_name,
+				image: o.profile_image || "",
+				rating: 4.8,
+				eventsCount: 12,
+				bio: "Experienced event organizer.",
+				location: "Unknown",
+				tags: ["Professional", "Corporate"],
+				featured: false,
+				contact: { email: o.email, phone: o.phone },
+				socialMedia: {
+					twitter: "eventoo",
+					linkedin: "eventoo",
+					website: "eventoo.com",
+				},
+			}));
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	onMount(async () => {
+		try {
+			await loadOrganisers();
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isLoading = false;
+		}
+	});
+
+	// Edit functions
+	function openEditModal(organiser: Organizer) {
+		editingOrganiser = organiser;
+		editFormData = {
+			first_name: organiser.first_name || organiser.organization_name || '',
+			last_name: organiser.last_name || '',
+			email: organiser.email,
+			phone: organiser.phone || '',
+			organization_name: organiser.organization_name || organiser.name || '',
+		};
+		editModalOpen = true;
+	}
+
+	async function handleUpdate() {
+		if (!editingOrganiser) return;
+		isUpdating = true;
+
+		try {
+			await updateOrganizer(editingOrganiser.id, editFormData);
+			await loadOrganisers();
+			editModalOpen = false;
+			editingOrganiser = null;
+		} catch (err: any) {
+			console.error("Failed to update organiser:", err);
+			alert("Failed to update organiser: " + err.message);
+		} finally {
+			isUpdating = false;
+		}
+	}
+
+	// Delete functions
+	function openDeleteDialog(organiser: Organizer) {
+		deletingOrganiser = organiser;
+		deleteDialogOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!deletingOrganiser) return;
+		isDeleting = true;
+
+		try {
+			await deleteOrganizer(deletingOrganiser.id);
+			organisers = organisers.filter(o => o.id !== deletingOrganiser!.id);
+			deleteDialogOpen = false;
+			deletingOrganiser = null;
+		} catch (err: any) {
+			console.error("Failed to delete organiser:", err);
+			alert("Failed to delete organiser: " + err.message);
+		} finally {
+			isDeleting = false;
+		}
+	}
 
 	// State
 	let searchQuery = $state("");
@@ -43,12 +157,12 @@
 	let itemsPerPage = $state(9);
 
 	// Modal state
-	let selectedOrganiser = $state<Organiser | null>(null);
+	let selectedOrganiser = $state<Organizer | null>(null);
 	let isModalOpen = $state(false);
 
 	// Derived Values
 	const uniqueTags = $derived.by(() => [
-		...new Set(organisers.flatMap((o) => o.tags)),
+		...new Set(organisers.flatMap((o) => o.tags || [])),
 	]);
 	const uniqueLocations = $derived.by(() => [
 		...new Set(organisers.map((o) => o.location)),
@@ -61,9 +175,9 @@
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter(
 				(o) =>
-					o.name.toLowerCase().includes(query) ||
-					o.location.toLowerCase().includes(query) ||
-					o.tag.toLowerCase().includes(query),
+					o.name?.toLowerCase().includes(query) ||
+					o.location?.toLowerCase().includes(query) ||
+					o.tags?.some((t) => t.toLowerCase().includes(query)),
 			);
 		}
 
@@ -79,7 +193,7 @@
 			);
 		}
 
-		return filtered.sort(
+		return [...filtered].sort(
 			(a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0),
 		);
 	});
@@ -130,7 +244,7 @@
 		activeDropdown = null;
 	}
 
-	function handleViewDetails(organiser: Organiser) {
+	function handleViewDetails(organiser: Organizer) {
 		selectedOrganiser = organiser;
 		isModalOpen = true;
 	}
@@ -142,21 +256,28 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="min-h-screen bg-gray-50/50 p-6 dark:bg-gray-950">
-	<div class="mx-auto max-w-7xl space-y-8">
+<div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 page-pad">
+	<div class="w-full max-w-full space-y-8">
 		<!-- Header Section -->
 		<div
 			class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
 		>
-			<div>
-				<h1
-					class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+			<div class="flex items-start gap-3">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
 				>
-					Organisers
-				</h1>
-				<p class="mt-1 text-gray-500 dark:text-gray-400">
-					Discover top event planners and agencies
-				</p>
+					<Building2 class="h-5 w-5" />
+				</div>
+				<div>
+					<h1
+						class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+					>
+						Organisers
+					</h1>
+					<p class="mt-1 text-gray-500 dark:text-gray-400">
+						Discover top event planners and agencies
+					</p>
+				</div>
 			</div>
 			<div class="flex gap-3">
 				<Button
@@ -252,7 +373,7 @@
 
 		<!-- Search & Filter Section -->
 		<div
-			class="relative z-50 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800"
+			class="relative z-40 rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800"
 		>
 			<div class="space-y-4">
 				<div class="relative">
@@ -352,7 +473,7 @@
 			{#if viewMode === "grid"}
 				<!-- Grid View -->
 				<div
-					class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+					class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
 				>
 					{#each paginatedOrganisers as organiser (organiser.id)}
 						<div
@@ -457,15 +578,29 @@
 											{organiser.rating}
 										</div>
 
-										<button
-											onclick={() =>
-												handleViewDetails(organiser)}
-											class="text-sm font-semibold text-gray-900 hover:text-gray-700 flex items-center gap-1 group-hover/btn:underline"
-										>
-											View Profile <ArrowUpRight
-												class="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-											/>
-										</button>
+										<div class="flex items-center gap-2">
+											<button
+												onclick={() => openEditModal(organiser)}
+												class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity"
+											>
+												<Edit class="h-4 w-4" />
+											</button>
+											<button
+												onclick={() => openDeleteDialog(organiser)}
+												class="p-1.5 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+											>
+												<Trash2 class="h-4 w-4" />
+											</button>
+											<button
+												onclick={() =>
+													handleViewDetails(organiser)}
+												class="text-sm font-semibold text-gray-900 hover:text-gray-700 flex items-center gap-1 group-hover/btn:underline"
+											>
+												View Profile <ArrowUpRight
+													class="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+												/>
+											</button>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -565,16 +700,33 @@
 											</div>
 										</td>
 										<td class="px-6 py-4 text-right">
-											<Button
-												variant="ghost"
-												size="sm"
-												onclick={() =>
-													handleViewDetails(
-														organiser,
-													)}
-											>
-												View
-											</Button>
+											<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100">
+												<Button
+													variant="ghost"
+													size="sm"
+													onclick={() => openEditModal(organiser)}
+												>
+													<Edit class="h-4 w-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="sm"
+													onclick={() => openDeleteDialog(organiser)}
+													class="hover:text-red-600 hover:bg-red-50"
+												>
+													<Trash2 class="h-4 w-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="sm"
+													onclick={() =>
+														handleViewDetails(
+															organiser,
+														)}
+												>
+													View
+												</Button>
+											</div>
 										</td>
 									</tr>
 								{/each}
@@ -644,3 +796,74 @@
 		bind:open={isModalOpen}
 	/>
 {/if}
+
+<!-- Edit Organiser Modal -->
+<Dialog.Root bind:open={editModalOpen}>
+	<Dialog.Content class="sm:max-w-[500px]">
+		<Dialog.Header>
+			<Dialog.Title>Edit Organiser</Dialog.Title>
+			<Dialog.Description>
+				Update organiser information below.
+			</Dialog.Description>
+		</Dialog.Header>
+		<div class="grid gap-4 py-4">
+			<div class="space-y-2">
+				<Label for="edit-org-name">Organization Name</Label>
+				<Input
+					id="edit-org-name"
+					bind:value={editFormData.organization_name}
+					placeholder="Organization name"
+					type="text"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-email">Email</Label>
+				<Input
+					id="edit-email"
+					bind:value={editFormData.email}
+					placeholder="Email address"
+					type="email"
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label for="edit-phone">Phone</Label>
+				<Input
+					id="edit-phone"
+					bind:value={editFormData.phone}
+					placeholder="Phone number"
+					type="text"
+				/>
+			</div>
+		</div>
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => editModalOpen = false} disabled={isUpdating}>
+				Cancel
+			</Button>
+			<Button onclick={handleUpdate} disabled={isUpdating}>
+				{isUpdating ? "Saving..." : "Save Changes"}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete Confirmation Dialog -->
+<AlertDialog.Root bind:open={deleteDialogOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Delete Organiser?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Are you sure you want to delete "{deletingOrganiser?.name}"? This action cannot be undone.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel disabled={isDeleting}>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Action
+				onclick={confirmDelete}
+				class="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+				disabled={isDeleting}
+			>
+				{isDeleting ? "Deleting..." : "Delete"}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

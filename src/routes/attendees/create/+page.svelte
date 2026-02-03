@@ -15,6 +15,7 @@
         ArrowLeft,
         Save,
         User,
+        UserPlus,
         Mail,
         Phone,
         MapPin,
@@ -24,6 +25,7 @@
         UserCheck,
     } from "lucide-svelte";
     import { fade } from "svelte/transition";
+    import { createUser } from "$lib/services/api";
 
     // Form data
     let formData = $state({
@@ -38,6 +40,7 @@
     });
 
     let isSubmitting = $state(false);
+    let error = $state<string | null>(null);
 
     const statusOptions = ["confirmed", "pending", "cancelled"];
     const ticketOptions = ["VIP", "Standard"];
@@ -64,11 +67,40 @@
 
     async function handleSubmit() {
         isSubmitting = true;
-        // Simulate API call
-        setTimeout(() => {
-            isSubmitting = false;
+        error = null;
+
+        try {
+            // Form validation
+            if (!formData.name || !formData.email) {
+                alert("Please fill in all required fields (Name and Email)");
+                isSubmitting = false;
+                return;
+            }
+
+            // Parse name into first_name and last_name
+            const nameParts = formData.name.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            // Build API payload
+            const userData = {
+                first_name: firstName,
+                last_name: lastName,
+                email: formData.email,
+                phone: formData.phone || undefined,
+            };
+
+            await createUser(userData);
+
+            // Redirect back to attendees page on success
             goto("/attendees");
-        }, 1000);
+        } catch (err: any) {
+            console.error("Error creating attendee:", err);
+            error = err.message || "Error creating attendee. Please try again.";
+            alert(error);
+        } finally {
+            isSubmitting = false;
+        }
     }
 
     function getStatusColor(status: string) {
@@ -89,7 +121,7 @@
     <title>Add New Attendee - Evento</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50/50 p-6 dark:bg-gray-950">
+<div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 page-pad">
     <div class="mx-auto max-w-7xl" in:fade={{ duration: 300 }}>
         <!-- Header -->
         <div class="mb-8 flex items-center justify-between">
@@ -103,15 +135,22 @@
                 >
                     <ArrowLeft class="h-4 w-4" />
                 </Button>
-                <div>
-                    <h1
-                        class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+                <div class="flex items-start gap-3">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
                     >
-                        Add New Attendee
-                    </h1>
-                    <p class="mt-1 text-gray-500 dark:text-gray-400">
-                        Register a new guest for your event
-                    </p>
+                        <UserPlus class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h1
+                            class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+                        >
+                            Add New Attendee
+                        </h1>
+                        <p class="mt-1 text-gray-500 dark:text-gray-400">
+                            Register a new guest for your event
+                        </p>
+                    </div>
                 </div>
             </div>
             <div class="flex gap-2">

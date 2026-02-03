@@ -29,6 +29,7 @@
   export let description: string | undefined = undefined;
   export let price: string | number | undefined = undefined; // displayed in footer
   export let type: string | undefined = undefined; // Badge in footer
+  export let compact: boolean = false;
 
   // Stats array: { icon: Component, value: string|number, label?: string }
   export let stats: Array<{
@@ -57,10 +58,12 @@
 </script>
 
 <Card
-  class="group relative flex flex-col h-full overflow-hidden border border-gray-100 bg-white dark:bg-gray-900 duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-800 rounded-2xl"
+  class="group relative flex h-full flex-col gap-0 overflow-hidden rounded-2xl border border-gray-100 bg-white p-0 dark:bg-gray-900 duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-800"
 >
   <!-- Image Section -->
-  <div class="relative aspect-video w-full overflow-hidden">
+  <div
+    class="relative w-full overflow-hidden rounded-t-2xl {compact ? 'aspect-[16/6]' : 'aspect-video'}"
+  >
     <button
       type="button"
       class="h-full w-full cursor-pointer bg-gray-100 dark:bg-gray-800"
@@ -69,7 +72,7 @@
       <img
         src={image || "/api/placeholder/600/300"}
         alt={title}
-        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        class="h-full w-full rounded-t-2xl object-cover transition-transform duration-500 group-hover:scale-110"
       />
     </button>
 
@@ -154,8 +157,8 @@
   </div>
 
   <!-- Content Section -->
-  <div class="flex flex-1 flex-col p-5">
-    <div class="mb-4">
+  <div class="flex flex-1 flex-col {compact ? 'p-3' : 'p-5'}">
+    <div class="{compact ? 'mb-2' : 'mb-4'}">
       <div class="mb-2 flex items-start justify-between gap-2">
         <h3
           class="line-clamp-1 text-lg font-bold text-gray-900 group-hover:text-primary dark:text-gray-100"
@@ -176,10 +179,12 @@
 
     <!-- Stats Grid -->
     {#if stats.length > 0}
-      <div class="mb-4 grid grid-cols-2 gap-3 text-sm">
+      <div
+        class="{compact ? 'mb-2 gap-2 text-xs' : 'mb-4 gap-3 text-sm'} grid grid-cols-2"
+      >
         {#each stats.slice(0, 2) as stat}
           <div
-            class="flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-1.5 dark:bg-gray-800"
+            class="flex items-center gap-2 rounded-lg bg-gray-50 px-2 {compact ? 'py-1' : 'py-1.5'} dark:bg-gray-800"
             title={stat.label}
           >
             <svelte:component
@@ -195,23 +200,23 @@
     {/if}
 
     <!-- Description -->
-    {#if description}
+    {#if description && !compact}
       <p
-        class="mb-6 line-clamp-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400"
+        class="{compact ? 'mb-4 line-clamp-1 text-xs' : 'mb-6 line-clamp-2 text-sm'} leading-relaxed text-gray-600 dark:text-gray-400"
       >
         {description}
       </p>
-    {:else}
-      <div class="mb-6 flex-1"></div>
+    {:else if !compact}
+      <div class="{compact ? 'mb-3' : 'mb-6'} flex-1"></div>
     {/if}
 
     <!-- Footer Actions -->
     <div
-      class="mt-auto flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-gray-800"
+      class="mt-auto flex items-center justify-between gap-4 border-t border-gray-100 {compact ? 'pt-2' : 'pt-4'} dark:border-gray-800"
     >
       <div class="flex flex-col">
         <span class="text-xs text-gray-500">Starting from</span>
-        <span class="text-lg font-bold text-gray-900 dark:text-gray-100">
+        <span class="{compact ? 'text-base' : 'text-lg'} font-bold text-gray-900 dark:text-gray-100">
           {#if price}
             {typeof price === "number"
               ? new Intl.NumberFormat("en-US", {
